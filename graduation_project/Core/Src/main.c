@@ -34,6 +34,22 @@ typedef enum {
 	MOTOR_DISABLED = 0,
 	MOTOR_ENABLED = 1
 } MotorState;
+
+typedef struct {
+    GPIO_TypeDef* enablePort;
+    uint16_t enablePin;
+    GPIO_TypeDef* directionPort;
+    uint16_t directionPin;
+    GPIO_TypeDef* stepPort;
+    uint16_t stepPin;
+    ADC_HandleTypeDef* hadc;
+    uint32_t adcChannel;
+    int lastStepPosition;
+    MotorState enabled;
+    int lastStablePotValue;
+    int lastMovementDirection;
+    int currentSpeed;
+} MotorController;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -84,21 +100,41 @@ const osThreadAttr_t Third_attributes = {
   .priority = (osPriority_t) osPriorityNormal,
 };
 /* USER CODE BEGIN PV */
-//for first motor
-int lastStepPosition1 = 0;
-MotorState motorEnabled1 = MOTOR_DISABLED;
-int lastStablePotValue1 = 0;
-uint32_t adcValue1 = 0;
-int lastMovementDirection1 = 0;
-int currentSpeed1 = BASE_PULSE_WIDTH;
+MotorController motor1 = {
+    .enablePort = GPIOE, .enablePin = GPIO_PIN_12,
+    .directionPort = GPIOE, .directionPin = GPIO_PIN_11,
+    .stepPort = GPIOE, .stepPin = GPIO_PIN_10,
+    .hadc = &hadc1, .adcChannel = ADC_CHANNEL_15,
+    .lastStepPosition = 0,
+    .enabled = MOTOR_DISABLED,
+    .lastStablePotValue = 0,
+    .lastMovementDirection = 0,
+    .currentSpeed = BASE_PULSE_WIDTH
+};
 
-//for second motor
-int lastStepPosition2 = 0;
-MotorState motorEnabled2 = MOTOR_DISABLED;
-int lastStablePotValue2 = 0;
-uint32_t adcValue2 = 0;
-int lastMovementDirection2 = 0;
-int currentSpeed2 = BASE_PULSE_WIDTH;
+MotorController motor2 = {
+    .enablePort = GPIOC, .enablePin = GPIO_PIN_8,
+    .directionPort = GPIOC, .directionPin = GPIO_PIN_7,
+    .stepPort = GPIOC, .stepPin = GPIO_PIN_6,
+    .hadc = &hadc1, .adcChannel = ADC_CHANNEL_14,
+    .lastStepPosition = 0,
+    .enabled = MOTOR_DISABLED,
+    .lastStablePotValue = 0,
+    .lastMovementDirection = 0,
+    .currentSpeed = BASE_PULSE_WIDTH
+};
+
+MotorController motor3 = {
+    .enablePort = GPIOB, .enablePin = GPIO_PIN_2,
+    .directionPort = GPIOB, .directionPin = GPIO_PIN_1,
+    .stepPort = GPIOB, .stepPin = GPIO_PIN_0,
+    .hadc = &hadc1, .adcChannel = ADC_CHANNEL_17,
+    .lastStepPosition = 0,
+    .enabled = MOTOR_DISABLED,
+    .lastStablePotValue = 0,
+    .lastMovementDirection = 0,
+    .currentSpeed = BASE_PULSE_WIDTH
+};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -110,216 +146,156 @@ static void MX_TIM8_Init(void);
 void FirstMotor(void *argument);
 void SecondMotor(void *argument);
 void ThirdMotor(void *argument);
+//void FirstMotor(void *argument);
+//void SecondMotor(void *argument);
+//void ThirdMotor(void *argument);
 
 /* USER CODE BEGIN PFP */
-int readStablePot(void);
-void moveToPositionSmooth(int targetStep);
-int readStablePot2(void);
-void moveToPositionSmooth2(int targetStep);
+int readStablePot(MotorController* motor);
+void moveToPositionSmooth(MotorController* motor, int targetStep);
 void HAL_Delay_us(uint32_t microseconds);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-int readStablePot() {
-	static int samples[POT_SAMPLES];
-	static int index = 0;
+int readStablePot(MotorController* motor) {
+    static int samples[3][POT_SAMPLES]; // One buffer per motor
+    static int indices[3] = {0};
+    int motorIndex = (motor == &motor1) ? 0 : (motor == &motor2) ? 1 : 2;
 
-	// Exponential moving average filter (better for real-time)
-	HAL_ADC_Start(&hadc1);
-	if (HAL_ADC_PollForConversion(&hadc1, 10) == HAL_OK) {
-		samples[index] = HAL_ADC_GetValue(&hadc1);
-	}
-	index = (index + 1) % POT_SAMPLES;
+    // Configure ADC for this motor's channel
+    ADC_ChannelConfTypeDef sConfig = {0};
+    sConfig.Channel = motor->adcChannel;
+    sConfig.Rank = ADC_REGULAR_RANK_1;
+    sConfig.SamplingTime = ADC_SAMPLETIME_387CYCLES_5;
+    sConfig.SingleDiff = ADC_SINGLE_ENDED;
+    HAL_ADC_ConfigChannel(motor->hadc, &sConfig);
 
-	// Exponential moving average (more responsive than simple average)
-	float alpha = 0.2; // Smoothing factor
-	static float filteredValue = 0;
-	if(filteredValue == 0) {
-		filteredValue = samples[0]; // Initialize
-	}
-	for(int i = 0; i < POT_SAMPLES; i++) {
-		filteredValue = alpha * samples[i] + (1 - alpha) * filteredValue;
-	}
-	return (int)filteredValue;
-}
-
-void moveToPositionSmooth(int targetStep) {
-	// Calculate movement with enhanced hysteresis
-	int direction;
-	int totalSteps = abs(targetStep - lastStepPosition1);
-
-	// Enhanced hysteresis with direction memory
-	if(abs(totalSteps) < MIN_MOVE_STEPS) {
-		return; // Ignore tiny movements
-	}
-
-	direction = (targetStep > lastStepPosition1) ? 1 : -1;
-
-	// Only reverse direction if we have significant movement
-	if((direction * lastMovementDirection1) < 0 && totalSteps < (POSITION_TOLERANCE*2)) {
-		direction = lastMovementDirection1; // Maintain direction
-		totalSteps = abs(targetStep - lastStepPosition1); // Recalculate
-	}
-
-	// Handle wrap-around
-	if(totalSteps > StepPerRevolution/2) {
-		direction *= -1;
-		totalSteps = StepPerRevolution - totalSteps;
-	}
-
-	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_11, (direction > 0) ? GPIO_PIN_SET : GPIO_PIN_RESET);
-	lastMovementDirection1 = direction;
-
-	// Enhanced acceleration profile
-	int accelSteps = min(ACCELERATION_STEPS, totalSteps/2);
-	int decelStart = totalSteps - accelSteps;
-
-	for(int i = 0; i < totalSteps; i++) {
-		int targetPulseWidth = BASE_PULSE_WIDTH;
-
-		// Smoother acceleration using cubic easing
-		if(i < accelSteps) {
-			float progress = (float)i / accelSteps;
-			targetPulseWidth = BASE_PULSE_WIDTH*2 - (BASE_PULSE_WIDTH * progress * progress * progress);
-		}
-		else if(i >= decelStart) {
-			float progress = (float)(i-decelStart) / accelSteps;
-			targetPulseWidth = BASE_PULSE_WIDTH + (BASE_PULSE_WIDTH * progress * progress * progress);
-		}
-
-		// Limit speed changes for smoother motion
-		if(abs(targetPulseWidth - currentSpeed1) > MAX_SPEED_CHANGE) {
-			if(targetPulseWidth < currentSpeed1) {
-				targetPulseWidth = currentSpeed1 - MAX_SPEED_CHANGE;
-			} else {
-				targetPulseWidth = currentSpeed1 + MAX_SPEED_CHANGE;
-			}
-		}
-		currentSpeed1 = targetPulseWidth;
-
-		// Execute step with precise timing
-		HAL_GPIO_WritePin(GPIOE, GPIO_PIN_10, GPIO_PIN_SET);
-		HAL_Delay_us(targetPulseWidth/2);
-		HAL_GPIO_WritePin(GPIOE, GPIO_PIN_10, GPIO_PIN_RESET);
-		HAL_Delay_us(targetPulseWidth/2);
-
-		// Update position
-		lastStepPosition1 += direction;
-		if(lastStepPosition1 >= StepPerRevolution) lastStepPosition1 = 0;
-		if(lastStepPosition1 < 0) lastStepPosition1 = StepPerRevolution - 1;
-	}
-}
-
-int readStablePot2() {
-    static int samples[POT_SAMPLES];
-    static int index = 0;
-
-    HAL_ADC_Start(&hadc1);
-
-    // Skip first conversion (channel 15 = pot1)
-    if (HAL_ADC_PollForConversion(&hadc1, 10) == HAL_OK) {
-        HAL_ADC_GetValue(&hadc1); // discard channel 15
+    // Read ADC value
+    HAL_ADC_Start(motor->hadc);
+    if (HAL_ADC_PollForConversion(motor->hadc, 10) == HAL_OK) {
+        samples[motorIndex][indices[motorIndex]] = HAL_ADC_GetValue(motor->hadc);
     }
+    HAL_ADC_Stop(motor->hadc);
 
-    // Read second conversion (channel 14 = A2 = pot2)
-    if (HAL_ADC_PollForConversion(&hadc1, 10) == HAL_OK) {
-        samples[index] = HAL_ADC_GetValue(&hadc1); // read channel 14
-    }
-
-    HAL_ADC_Stop(&hadc1);
-
-    index = (index + 1) % POT_SAMPLES;
+    indices[motorIndex] = (indices[motorIndex] + 1) % POT_SAMPLES;
 
     // Exponential moving average
     float alpha = 0.2f;
-    static float filteredValue = 0;
-    if (filteredValue == 0) {
-        filteredValue = samples[0]; // Initialize
+    static float filteredValues[3] = {0};
+    if (filteredValues[motorIndex] == 0) {
+        filteredValues[motorIndex] = samples[motorIndex][0];
     }
+
     for (int i = 0; i < POT_SAMPLES; i++) {
-        filteredValue = alpha * samples[i] + (1 - alpha) * filteredValue;
+        filteredValues[motorIndex] = alpha * samples[motorIndex][i] +
+                                   (1 - alpha) * filteredValues[motorIndex];
     }
-    return (int)filteredValue;
+
+    return (int)filteredValues[motorIndex];
 }
 
+void moveToPositionSmooth(MotorController* motor, int targetStep) {
+    int direction;
+    int totalSteps = abs(targetStep - motor->lastStepPosition);
 
+    if (totalSteps < MIN_MOVE_STEPS) {
+        return;
+    }
 
-void moveToPositionSmooth2(int targetStep) {
-	// Calculate movement with enhanced hysteresis
-	int direction;
-	int totalSteps = abs(targetStep - lastStepPosition2);
+    direction = (targetStep > motor->lastStepPosition) ? 1 : -1;
 
-	// Enhanced hysteresis with direction memory
-	if(abs(totalSteps) < MIN_MOVE_STEPS) {
-		return; // Ignore tiny movements
-	}
+    if ((direction * motor->lastMovementDirection) < 0 &&
+        totalSteps < (POSITION_TOLERANCE*2)) {
+        direction = motor->lastMovementDirection;
+        totalSteps = abs(targetStep - motor->lastStepPosition);
+    }
 
-	direction = (targetStep > lastStepPosition2) ? 1 : -1;
+    if (totalSteps > StepPerRevolution/2) {
+        direction *= -1;
+        totalSteps = StepPerRevolution - totalSteps;
+    }
 
-	// Only reverse direction if we have significant movement
-	if((direction * lastMovementDirection2) < 0 && totalSteps < (POSITION_TOLERANCE*2)) {
-		direction = lastMovementDirection2; // Maintain direction
-		totalSteps = abs(targetStep - lastStepPosition2); // Recalculate
-	}
+    HAL_GPIO_WritePin(motor->directionPort, motor->directionPin,
+                      (direction > 0) ? GPIO_PIN_SET : GPIO_PIN_RESET);
+    motor->lastMovementDirection = direction;
 
-	// Handle wrap-around
-	if(totalSteps > StepPerRevolution/2) {
-		direction *= -1;
-		totalSteps = StepPerRevolution - totalSteps;
-	}
+    int accelSteps = min(ACCELERATION_STEPS, totalSteps/2);
+    int decelStart = totalSteps - accelSteps;
 
-	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, (direction > 0) ? GPIO_PIN_SET : GPIO_PIN_RESET);
-	lastMovementDirection2 = direction;
+    for (int i = 0; i < totalSteps; i++) {
+        int targetPulseWidth = BASE_PULSE_WIDTH;
 
-	// Enhanced acceleration profile
-	int accelSteps = min(ACCELERATION_STEPS, totalSteps/2);
-	int decelStart = totalSteps - accelSteps;
+        if (i < accelSteps) {
+            float progress = (float)i / accelSteps;
+            targetPulseWidth = BASE_PULSE_WIDTH*2 - (BASE_PULSE_WIDTH * progress * progress * progress);
+        }
+        else if (i >= decelStart) {
+            float progress = (float)(i-decelStart) / accelSteps;
+            targetPulseWidth = BASE_PULSE_WIDTH + (BASE_PULSE_WIDTH * progress * progress * progress);
+        }
 
-	for(int i = 0; i < totalSteps; i++) {
-		int targetPulseWidth = BASE_PULSE_WIDTH;
+        if (abs(targetPulseWidth - motor->currentSpeed) > MAX_SPEED_CHANGE) {
+            if (targetPulseWidth < motor->currentSpeed) {
+                targetPulseWidth = motor->currentSpeed - MAX_SPEED_CHANGE;
+            } else {
+                targetPulseWidth = motor->currentSpeed + MAX_SPEED_CHANGE;
+            }
+        }
+        motor->currentSpeed = targetPulseWidth;
 
-		// Smoother acceleration using cubic easing
-		if(i < accelSteps) {
-			float progress = (float)i / accelSteps;
-			targetPulseWidth = BASE_PULSE_WIDTH*2 - (BASE_PULSE_WIDTH * progress * progress * progress);
-		}
-		else if(i >= decelStart) {
-			float progress = (float)(i-decelStart) / accelSteps;
-			targetPulseWidth = BASE_PULSE_WIDTH + (BASE_PULSE_WIDTH * progress * progress * progress);
-		}
+        HAL_GPIO_WritePin(motor->stepPort, motor->stepPin, GPIO_PIN_SET);
+        HAL_Delay_us(targetPulseWidth/2);
+        HAL_GPIO_WritePin(motor->stepPort, motor->stepPin, GPIO_PIN_RESET);
+        HAL_Delay_us(targetPulseWidth/2);
 
-		// Limit speed changes for smoother motion
-		if(abs(targetPulseWidth - currentSpeed2) > MAX_SPEED_CHANGE) {
-			if(targetPulseWidth < currentSpeed2) {
-				targetPulseWidth = currentSpeed2 - MAX_SPEED_CHANGE;
-			} else {
-				targetPulseWidth = currentSpeed2 + MAX_SPEED_CHANGE;
-			}
-		}
-		currentSpeed2 = targetPulseWidth;
-
-		// Execute step with precise timing
-		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, GPIO_PIN_SET);
-		HAL_Delay_us(targetPulseWidth/2);
-		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, GPIO_PIN_RESET);
-		HAL_Delay_us(targetPulseWidth/2);
-
-		// Update position
-		lastStepPosition2 += direction;
-		if(lastStepPosition2 >= StepPerRevolution) lastStepPosition2 = 0;
-		if(lastStepPosition2 < 0) lastStepPosition2 = StepPerRevolution - 1;
-	}
+        motor->lastStepPosition += direction;
+        if (motor->lastStepPosition >= StepPerRevolution) motor->lastStepPosition = 0;
+        if (motor->lastStepPosition < 0) motor->lastStepPosition = StepPerRevolution - 1;
+    }
 }
 
 // Microsecond delay function
 void HAL_Delay_us(uint32_t microseconds) {
-	uint32_t start = DWT->CYCCNT;
-	uint32_t cycles = (SystemCoreClock / 1000000) * microseconds;
+    uint32_t start = DWT->CYCCNT;
+    uint32_t cycles = (SystemCoreClock / 1000000) * microseconds;
 
-	while ((DWT->CYCCNT - start) < cycles) {
-		// Wait
-	}
+    while ((DWT->CYCCNT - start) < cycles) {
+        // Wait
+    }
+}
+void MotorThread(void* argument) {
+    MotorController* motor = (MotorController*)argument;
+
+    // Initialize motor state
+    HAL_GPIO_WritePin(motor->enablePort, motor->enablePin, GPIO_PIN_SET);
+    motor->enabled = MOTOR_DISABLED;
+    motor->lastStablePotValue = readStablePot(motor);
+
+    for (;;) {
+        int potValue = readStablePot(motor);
+        int targetStep = (int)((float)potValue / 65535.0f * (StepPerRevolution-1));
+
+        int potDifference = abs(potValue - motor->lastStablePotValue);
+
+        if (potDifference > POT_DEADZONE ||
+            (motor->enabled == MOTOR_ENABLED && potDifference > POT_DEADZONE/2)) {
+            if (motor->enabled == MOTOR_DISABLED) {
+                HAL_GPIO_WritePin(motor->enablePort, motor->enablePin, GPIO_PIN_RESET);
+                motor->enabled = MOTOR_ENABLED;
+            }
+
+            moveToPositionSmooth(motor, targetStep);
+            motor->lastStablePotValue = potValue;
+        }
+        else if (motor->enabled == MOTOR_ENABLED &&
+                abs(targetStep - motor->lastStepPosition) <= POSITION_TOLERANCE) {
+            HAL_GPIO_WritePin(motor->enablePort, motor->enablePin, GPIO_PIN_SET);
+            motor->enabled = MOTOR_DISABLED;
+        }
+
+        osDelay(10);
+    }
 }
 /* USER CODE END 0 */
 
@@ -364,14 +340,10 @@ int main(void)
 	// Start TIM8 for ADC triggering
 	HAL_TIM_Base_Start(&htim8);
 
-	// Start with motor disabled
-	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_12, GPIO_PIN_SET);
-	motorEnabled1 = MOTOR_DISABLED;
-	lastStablePotValue1 = readStablePot();
-
-	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, GPIO_PIN_SET);
-	motorEnabled2 = MOTOR_DISABLED;
-	lastStablePotValue2 = readStablePot2();
+	  // Initialize motor states
+	  HAL_GPIO_WritePin(motor1.enablePort, motor1.enablePin, GPIO_PIN_SET);
+	  HAL_GPIO_WritePin(motor2.enablePort, motor2.enablePin, GPIO_PIN_SET);
+	  HAL_GPIO_WritePin(motor3.enablePort, motor3.enablePin, GPIO_PIN_SET);
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -395,13 +367,13 @@ int main(void)
 
   /* Create the thread(s) */
   /* creation of First */
-  FirstHandle = osThreadNew(FirstMotor, NULL, &First_attributes);
+  FirstHandle = osThreadNew(MotorThread, &motor1, &First_attributes);
 
   /* creation of Second */
-  SecondHandle = osThreadNew(SecondMotor, NULL, &Second_attributes);
+  SecondHandle = osThreadNew(MotorThread, &motor2, &Second_attributes);
 
   /* creation of Third */
-  ThirdHandle = osThreadNew(ThirdMotor, NULL, &Third_attributes);
+  ThirdHandle = osThreadNew(MotorThread, &motor3, &Third_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
 	/* add threads, ... */
@@ -688,102 +660,117 @@ static void MX_GPIO_Init(void)
 void FirstMotor(void *argument)
 {
   /* USER CODE BEGIN 5 */
-	// Initialize motor state
-	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_12, GPIO_PIN_SET); // Start with motor disabled
-	motorEnabled1 = MOTOR_DISABLED;
-	lastStablePotValue1 = readStablePot();
+    // Initialize motor state
+    HAL_GPIO_WritePin(motor1.enablePort, motor1.enablePin, GPIO_PIN_SET);
+    motor1.enabled = MOTOR_DISABLED;
+    motor1.lastStablePotValue = readStablePot(&motor1);
 
-	/* Infinite loop */
-	for(;;)
-	{
-		int potValue = readStablePot();
-		int targetStep = (int)((float)potValue / 65535.0f * (StepPerRevolution-1));
+    /* Infinite loop */
+    for(;;)
+    {
+        int potValue = readStablePot(&motor1);
+        int targetStep = (int)((float)potValue / 65535.0f * (StepPerRevolution-1));
 
-		// Only react to significant pot changes with hysteresis
-		int potDifference = abs(potValue - lastStablePotValue1);
+        // Only react to significant pot changes with hysteresis
+        int potDifference = abs(potValue - motor1.lastStablePotValue);
 
-		if(potDifference > POT_DEADZONE ||
-				(motorEnabled1 == MOTOR_ENABLED && potDifference > POT_DEADZONE/2)) {
-			if(motorEnabled1 == MOTOR_DISABLED) {
-				HAL_GPIO_WritePin(GPIOE, GPIO_PIN_12, GPIO_PIN_RESET);
-				motorEnabled1 = MOTOR_ENABLED;
-			}
+        if(potDifference > POT_DEADZONE ||
+                (motor1.enabled == MOTOR_ENABLED && potDifference > POT_DEADZONE/2)) {
+            if(motor1.enabled == MOTOR_DISABLED) {
+                HAL_GPIO_WritePin(motor1.enablePort, motor1.enablePin, GPIO_PIN_RESET);
+                motor1.enabled = MOTOR_ENABLED;
+            }
 
-			moveToPositionSmooth(targetStep);
-			lastStablePotValue1 = potValue;
-		}
-		else if(motorEnabled1 == MOTOR_ENABLED &&
-				abs(targetStep - lastStepPosition1) <= POSITION_TOLERANCE) {
-			HAL_GPIO_WritePin(GPIOE, GPIO_PIN_12, GPIO_PIN_SET);
-			motorEnabled1 = MOTOR_DISABLED;
-		}
+            moveToPositionSmooth(&motor1, targetStep);
+            motor1.lastStablePotValue = potValue;
+        }
+        else if(motor1.enabled == MOTOR_ENABLED &&
+                abs(targetStep - motor1.lastStepPosition) <= POSITION_TOLERANCE) {
+            HAL_GPIO_WritePin(motor1.enablePort, motor1.enablePin, GPIO_PIN_SET);
+            motor1.enabled = MOTOR_DISABLED;
+        }
 
-		osDelay(10); // Delay using FreeRTOS (10ms delay)
-	}
+        osDelay(10); // Delay using FreeRTOS (10ms delay)
+    }
   /* USER CODE END 5 */
 }
 
-/* USER CODE BEGIN Header_SecondMotor */
-/**
- * @brief Function implementing the Second thread.
- * @param argument: Not used
- * @retval None
- */
-/* USER CODE END Header_SecondMotor */
 void SecondMotor(void *argument)
 {
   /* USER CODE BEGIN SecondMotor */
-	// Initialize motor state
-	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, GPIO_PIN_SET); // Start with motor disabled
-	motorEnabled2 = MOTOR_DISABLED;
-	lastStablePotValue2 = readStablePot2();
-	/* Infinite loop */
-	for(;;)
-	{
-		int potValue = readStablePot2();
-		int targetStep = (int)((float)potValue / 65535.0f * (StepPerRevolution-1));
+    // Initialize motor state
+    HAL_GPIO_WritePin(motor2.enablePort, motor2.enablePin, GPIO_PIN_SET);
+    motor2.enabled = MOTOR_DISABLED;
+    motor2.lastStablePotValue = readStablePot(&motor2);
 
-		// Only react to significant pot changes with hysteresis
-		int potDifference = abs(potValue - lastStablePotValue2);
+    /* Infinite loop */
+    for(;;)
+    {
+        int potValue = readStablePot(&motor2);
+        int targetStep = (int)((float)potValue / 65535.0f * (StepPerRevolution-1));
 
-		if(potDifference > POT_DEADZONE ||
-				(motorEnabled2 == MOTOR_ENABLED && potDifference > POT_DEADZONE/2)) {
-			if(motorEnabled2 == MOTOR_DISABLED) {
-				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, GPIO_PIN_RESET);
-				motorEnabled2 = MOTOR_ENABLED;
-			}
+        // Only react to significant pot changes with hysteresis
+        int potDifference = abs(potValue - motor2.lastStablePotValue);
 
-			moveToPositionSmooth2(targetStep);
-			lastStablePotValue2 = potValue;
-		}
-		else if(motorEnabled2 == MOTOR_ENABLED &&
-				abs(targetStep - lastStepPosition2) <= POSITION_TOLERANCE) {
-			HAL_GPIO_WritePin(GPIOE, GPIO_PIN_8, GPIO_PIN_SET);
-			motorEnabled2 = MOTOR_DISABLED;
-		}
+        if(potDifference > POT_DEADZONE ||
+                (motor2.enabled == MOTOR_ENABLED && potDifference > POT_DEADZONE/2)) {
+            if(motor2.enabled == MOTOR_DISABLED) {
+                HAL_GPIO_WritePin(motor2.enablePort, motor2.enablePin, GPIO_PIN_RESET);
+                motor2.enabled = MOTOR_ENABLED;
+            }
 
-		osDelay(10); // Delay using FreeRTOS (10ms delay)
-	}
+            moveToPositionSmooth(&motor2, targetStep);
+            motor2.lastStablePotValue = potValue;
+        }
+        else if(motor2.enabled == MOTOR_ENABLED &&
+                abs(targetStep - motor2.lastStepPosition) <= POSITION_TOLERANCE) {
+            HAL_GPIO_WritePin(motor2.enablePort, motor2.enablePin, GPIO_PIN_SET);
+            motor2.enabled = MOTOR_DISABLED;
+        }
+
+        osDelay(10); // Delay using FreeRTOS (10ms delay)
+    }
   /* USER CODE END SecondMotor */
 }
 
-/* USER CODE BEGIN Header_ThirdMotor */
-/**
-* @brief Function implementing the Third thread.
-* @param argument: Not used
-* @retval None
-*/
-/* USER CODE END Header_ThirdMotor */
 void ThirdMotor(void *argument)
 {
   /* USER CODE BEGIN ThirdMotor */
-  /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
+    // Initialize motor state
+    HAL_GPIO_WritePin(motor3.enablePort, motor3.enablePin, GPIO_PIN_SET);
+    motor3.enabled = MOTOR_DISABLED;
+    motor3.lastStablePotValue = readStablePot(&motor3);
+
+    /* Infinite loop */
+    for(;;)
+    {
+        int potValue = readStablePot(&motor3);
+        int targetStep = (int)((float)potValue / 65535.0f * (StepPerRevolution-1));
+
+        // Only react to significant pot changes with hysteresis
+        int potDifference = abs(potValue - motor3.lastStablePotValue);
+
+        if(potDifference > POT_DEADZONE ||
+                (motor3.enabled == MOTOR_ENABLED && potDifference > POT_DEADZONE/2)) {
+            if(motor3.enabled == MOTOR_DISABLED) {
+                HAL_GPIO_WritePin(motor3.enablePort, motor3.enablePin, GPIO_PIN_RESET);
+                motor3.enabled = MOTOR_ENABLED;
+            }
+
+            moveToPositionSmooth(&motor3, targetStep);
+            motor3.lastStablePotValue = potValue;
+        }
+        else if(motor3.enabled == MOTOR_ENABLED &&
+                abs(targetStep - motor3.lastStepPosition) <= POSITION_TOLERANCE) {
+            HAL_GPIO_WritePin(motor3.enablePort, motor3.enablePin, GPIO_PIN_SET);
+            motor3.enabled = MOTOR_DISABLED;
+        }
+
+        osDelay(10); // Delay using FreeRTOS (10ms delay)
+    }
   /* USER CODE END ThirdMotor */
 }
+
 
  /* MPU Configuration */
 
