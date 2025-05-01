@@ -57,6 +57,24 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define PUL_Motor3_Pin GPIO_PIN_0
+#define PUL_Motor3_GPIO_Port GPIOB
+#define DIR_Motor3_Pin GPIO_PIN_1
+#define DIR_Motor3_GPIO_Port GPIOB
+#define ENA_Motor3_Pin GPIO_PIN_2
+#define ENA_Motor3_GPIO_Port GPIOB
+#define PUL_Motor1_Pin GPIO_PIN_10
+#define PUL_Motor1_GPIO_Port GPIOE
+#define DIR_Motro1_Pin GPIO_PIN_11
+#define DIR_Motro1_GPIO_Port GPIOE
+#define ENA_Motor1_Pin GPIO_PIN_12
+#define ENA_Motor1_GPIO_Port GPIOE
+#define PUL_Motor2_Pin GPIO_PIN_6
+#define PUL_Motor2_GPIO_Port GPIOC
+#define DIR_Motor2_Pin GPIO_PIN_7
+#define DIR_Motor2_GPIO_Port GPIOC
+#define ENA_Motor2_Pin GPIO_PIN_8
+#define ENA_Motor2_GPIO_Port GPIOC
 
 /* USER CODE BEGIN Private defines */
 

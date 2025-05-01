@@ -76,6 +76,13 @@ const osThreadAttr_t Second_attributes = {
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
+/* Definitions for Third */
+osThreadId_t ThirdHandle;
+const osThreadAttr_t Third_attributes = {
+  .name = "Third",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
+};
 /* USER CODE BEGIN PV */
 //for first motor
 int lastStepPosition1 = 0;
@@ -102,6 +109,7 @@ static void MX_ADC1_Init(void);
 static void MX_TIM8_Init(void);
 void FirstMotor(void *argument);
 void SecondMotor(void *argument);
+void ThirdMotor(void *argument);
 
 /* USER CODE BEGIN PFP */
 int readStablePot(void);
@@ -392,6 +400,9 @@ int main(void)
   /* creation of Second */
   SecondHandle = osThreadNew(SecondMotor, NULL, &Second_attributes);
 
+  /* creation of Third */
+  ThirdHandle = osThreadNew(ThirdMotor, NULL, &Third_attributes);
+
   /* USER CODE BEGIN RTOS_THREADS */
 	/* add threads, ... */
   /* USER CODE END RTOS_THREADS */
@@ -503,7 +514,7 @@ static void MX_ADC1_Init(void)
   hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
   hadc1.Init.LowPowerAutoWait = DISABLE;
   hadc1.Init.ContinuousConvMode = DISABLE;
-  hadc1.Init.NbrOfConversion = 2;
+  hadc1.Init.NbrOfConversion = 3;
   hadc1.Init.DiscontinuousConvMode = DISABLE;
   hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
   hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
@@ -543,6 +554,15 @@ static void MX_ADC1_Init(void)
   */
   sConfig.Channel = ADC_CHANNEL_14;
   sConfig.Rank = ADC_REGULAR_RANK_2;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure Regular Channel
+  */
+  sConfig.Channel = ADC_CHANNEL_17;
+  sConfig.Rank = ADC_REGULAR_RANK_3;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {
     Error_Handler();
@@ -615,24 +635,35 @@ static void MX_GPIO_Init(void)
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE();
   __HAL_RCC_GPIOE_CLK_ENABLE();
   __HAL_RCC_GPIOC_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOE, GPIO_PIN_10|GPIO_PIN_11|GPIO_PIN_12, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, PUL_Motor3_Pin|DIR_Motor3_Pin|ENA_Motor3_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6|GPIO_PIN_7|GPIO_PIN_8, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOE, PUL_Motor1_Pin|DIR_Motro1_Pin|ENA_Motor1_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : PE10 PE11 PE12 */
-  GPIO_InitStruct.Pin = GPIO_PIN_10|GPIO_PIN_11|GPIO_PIN_12;
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOC, PUL_Motor2_Pin|DIR_Motor2_Pin|ENA_Motor2_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pins : PUL_Motor3_Pin DIR_Motor3_Pin ENA_Motor3_Pin */
+  GPIO_InitStruct.Pin = PUL_Motor3_Pin|DIR_Motor3_Pin|ENA_Motor3_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : PUL_Motor1_Pin DIR_Motro1_Pin ENA_Motor1_Pin */
+  GPIO_InitStruct.Pin = PUL_Motor1_Pin|DIR_Motro1_Pin|ENA_Motor1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PC6 PC7 PC8 */
-  GPIO_InitStruct.Pin = GPIO_PIN_6|GPIO_PIN_7|GPIO_PIN_8;
+  /*Configure GPIO pins : PUL_Motor2_Pin DIR_Motor2_Pin ENA_Motor2_Pin */
+  GPIO_InitStruct.Pin = PUL_Motor2_Pin|DIR_Motor2_Pin|ENA_Motor2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -734,6 +765,24 @@ void SecondMotor(void *argument)
 		osDelay(10); // Delay using FreeRTOS (10ms delay)
 	}
   /* USER CODE END SecondMotor */
+}
+
+/* USER CODE BEGIN Header_ThirdMotor */
+/**
+* @brief Function implementing the Third thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_ThirdMotor */
+void ThirdMotor(void *argument)
+{
+  /* USER CODE BEGIN ThirdMotor */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END ThirdMotor */
 }
 
  /* MPU Configuration */
