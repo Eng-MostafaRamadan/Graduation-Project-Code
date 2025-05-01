@@ -106,6 +106,13 @@ const osThreadAttr_t Fourth_attributes = {
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
+/* Definitions for FifthAndSixth */
+osThreadId_t FifthAndSixthHandle;
+const osThreadAttr_t FifthAndSixth_attributes = {
+  .name = "FifthAndSixth",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
+};
 /* USER CODE BEGIN PV */
 MotorController motor1 = {
     .enablePort = GPIOE, .enablePin = GPIO_PIN_12,
@@ -154,6 +161,30 @@ MotorController motor4 = {
     .lastMovementDirection = 0,
     .currentSpeed = BASE_PULSE_WIDTH
 };
+
+MotorController motor5 = {
+    .enablePort = GPIOD, .enablePin = GPIO_PIN_12,
+    .directionPort = GPIOD, .directionPin = GPIO_PIN_11,
+    .stepPort = GPIOD, .stepPin = GPIO_PIN_10,
+    .hadc = &hadc1, .adcChannel = ADC_CHANNEL_18,
+    .lastStepPosition = 0,
+    .enabled = MOTOR_DISABLED,
+    .lastStablePotValue = 0,
+    .lastMovementDirection = 0,
+    .currentSpeed = BASE_PULSE_WIDTH
+};
+
+MotorController motor6 = {
+    .enablePort = GPIOD, .enablePin = GPIO_PIN_15,
+    .directionPort = GPIOD, .directionPin = GPIO_PIN_14,
+    .stepPort = GPIOD, .stepPin = GPIO_PIN_13,
+    .hadc = &hadc1, .adcChannel = ADC_CHANNEL_18,
+    .lastStepPosition = 0,
+    .enabled = MOTOR_DISABLED,
+    .lastStablePotValue = 0,
+    .lastMovementDirection = 0,
+    .currentSpeed = BASE_PULSE_WIDTH
+};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -166,6 +197,7 @@ void FirstMotor(void *argument);
 void SecondMotor(void *argument);
 void ThirdMotor(void *argument);
 void FourthMotor(void *argument);
+void FifthAndSixthMotor(void *argument);
 
 /* USER CODE BEGIN PFP */
 int readStablePot(MotorController* motor);
@@ -402,6 +434,9 @@ int main(void)
   /* creation of Fourth */
   FourthHandle = osThreadNew(FourthMotor, NULL, &Fourth_attributes);
 
+  /* creation of FifthAndSixth */
+  FifthAndSixthHandle = osThreadNew(FifthAndSixthMotor, NULL, &FifthAndSixth_attributes);
+
   /* USER CODE BEGIN RTOS_THREADS */
 	/* add threads, ... */
   /* USER CODE END RTOS_THREADS */
@@ -513,7 +548,7 @@ static void MX_ADC1_Init(void)
   hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
   hadc1.Init.LowPowerAutoWait = DISABLE;
   hadc1.Init.ContinuousConvMode = DISABLE;
-  hadc1.Init.NbrOfConversion = 4;
+  hadc1.Init.NbrOfConversion = 5;
   hadc1.Init.DiscontinuousConvMode = DISABLE;
   hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
   hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
@@ -571,6 +606,15 @@ static void MX_ADC1_Init(void)
   */
   sConfig.Channel = ADC_CHANNEL_16;
   sConfig.Rank = ADC_REGULAR_RANK_4;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure Regular Channel
+  */
+  sConfig.Channel = ADC_CHANNEL_18;
+  sConfig.Rank = ADC_REGULAR_RANK_5;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {
     Error_Handler();
@@ -645,6 +689,7 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
   __HAL_RCC_GPIOE_CLK_ENABLE();
+  __HAL_RCC_GPIOD_CLK_ENABLE();
   __HAL_RCC_GPIOC_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
@@ -653,6 +698,10 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOE, PUL_Motor4_Pin|DIR_Motor4_Pin|ENA_Motor4_Pin|PUL_Motor1_Pin
                           |DIR_Motro1_Pin|ENA_Motor1_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOD, PUL_Motor5_Pin|DIR_Motor5_Pin|ENA_Motor5_Pin|PUL_Motor6_Pin
+                          |PUL_Motor6D14_Pin|PUL_Motor6D15_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOC, PUL_Motor2_Pin|DIR_Motor2_Pin|ENA_Motor2_Pin, GPIO_PIN_RESET);
@@ -672,6 +721,15 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : PUL_Motor5_Pin DIR_Motor5_Pin ENA_Motor5_Pin PUL_Motor6_Pin
+                           PUL_Motor6D14_Pin PUL_Motor6D15_Pin */
+  GPIO_InitStruct.Pin = PUL_Motor5_Pin|DIR_Motor5_Pin|ENA_Motor5_Pin|PUL_Motor6_Pin
+                          |PUL_Motor6D14_Pin|PUL_Motor6D15_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PUL_Motor2_Pin DIR_Motor2_Pin ENA_Motor2_Pin */
   GPIO_InitStruct.Pin = PUL_Motor2_Pin|DIR_Motor2_Pin|ENA_Motor2_Pin;
@@ -867,6 +925,24 @@ void FourthMotor(void *argument)
         osDelay(10); // Delay using FreeRTOS (10ms delay)
     }
   /* USER CODE END FourthMotor */
+}
+
+/* USER CODE BEGIN Header_FifthAndSixthMotor */
+/**
+* @brief Function implementing the FifthAndSixth thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_FifthAndSixthMotor */
+void FifthAndSixthMotor(void *argument)
+{
+  /* USER CODE BEGIN FifthAndSixthMotor */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END FifthAndSixthMotor */
 }
 
  /* MPU Configuration */
