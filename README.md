@@ -27,20 +27,20 @@ The system enables remote control of a robotic mechanism using stepper motors, d
 - C programming for real-time embedded control
 
 ## 📁 Project Structure
-└── 📁 Project_Root
-├── 📁 Core
-│ ├── 📁 Src # Main source files
-│ │ ├── motor_control.c
-│ │ ├── adc_reading.c
-│ │ └── main.c
-│ └── 📁 Inc # Header files
-│ ├── motor_control.h
-│ ├── adc_reading.h
-│ └── main.h
-├── 📁 Drivers # STM32 HAL drivers
-│ ├── 📁 CMSIS
-│ └── 📁 STM32H7xx_HAL_Driver
-└── 📄 README.md # Project documentation
+- └── 📁 Project_Root
+- ├── 📁 Core
+- │ ├── 📁 Src # Main source files
+- │ │ ├── motor_control.c
+- │ │ ├── adc_reading.c
+- │ │ └── main.c
+- │ └── 📁 Inc # Header files
+- │ ├── motor_control.h
+- │ ├── adc_reading.h
+- │ └── main.h
+- ├── 📁 Drivers # STM32 HAL drivers
+- │ ├── 📁 CMSIS
+- │ └── 📁 STM32H7xx_HAL_Driver
+- └── 📄 README.md # Project documentation
 
 ## 🚀 Getting Started
 
