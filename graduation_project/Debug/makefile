@@ -64,8 +64,8 @@ all: main-build
 main-build: graduation_project.elf secondary-outputs
 
 # Tool invocations
-graduation_project.elf graduation_project.map: $(OBJS) $(USER_OBJS) M:\Mostafa\ Ramadan\programming\STM32CubeIDE\firts_motor_freertos\STM32H750VBTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "graduation_project.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m7 -T"M:\Mostafa Ramadan\programming\STM32CubeIDE\firts_motor_freertos\STM32H750VBTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="graduation_project.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv5-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+graduation_project.elf graduation_project.map: $(OBJS) $(USER_OBJS) M:\Mostafa\ Ramadan\programming\STM32CubeIDE\graduation_project_code\graduation_project\STM32H750VBTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "graduation_project.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m7 -T"M:\Mostafa Ramadan\programming\STM32CubeIDE\graduation_project_code\graduation_project\STM32H750VBTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="graduation_project.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv5-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

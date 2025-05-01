@@ -34,11 +34,6 @@ typedef enum {
 	MOTOR_DISABLED = 0,
 	MOTOR_ENABLED = 1
 } MotorState;
-
-typedef enum {
-	MOTOR_DISABLED2 = 0,
-	MOTOR_ENABLED2 = 1
-} MotorState2;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -92,7 +87,7 @@ int currentSpeed = BASE_PULSE_WIDTH;
 
 //for second motor
 int lastStepPosition2 = 0;
-MotorState2 motorEnabled2 = MOTOR_DISABLED;
+MotorState motorEnabled2 = MOTOR_DISABLED;
 int lastStablePotValue2 = 0;
 uint32_t adcValue2 = 0;
 int lastMovementDirection2 = 0;
@@ -367,7 +362,7 @@ int main(void)
 	lastStablePotValue = readStablePot();
 
 	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, GPIO_PIN_SET);
-	motorEnabled2 = MOTOR_DISABLED2;
+	motorEnabled2 = MOTOR_DISABLED;
 	lastStablePotValue2 = readStablePot2();
   /* USER CODE END 2 */
 
@@ -709,7 +704,7 @@ void SecondMotor(void *argument)
   /* USER CODE BEGIN SecondMotor */
 	// Initialize motor state
 	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, GPIO_PIN_SET); // Start with motor disabled
-	motorEnabled2 = MOTOR_DISABLED2;
+	motorEnabled2 = MOTOR_DISABLED;
 	lastStablePotValue2 = readStablePot2();
 	/* Infinite loop */
 	for(;;)
@@ -721,19 +716,19 @@ void SecondMotor(void *argument)
 		int potDifference = abs(potValue - lastStablePotValue2);
 
 		if(potDifference > POT_DEADZONE ||
-				(motorEnabled2 == MOTOR_ENABLED2 && potDifference > POT_DEADZONE/2)) {
-			if(motorEnabled2 == MOTOR_DISABLED2) {
+				(motorEnabled2 == MOTOR_ENABLED && potDifference > POT_DEADZONE/2)) {
+			if(motorEnabled2 == MOTOR_DISABLED) {
 				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, GPIO_PIN_RESET);
-				motorEnabled2 = MOTOR_ENABLED2;
+				motorEnabled2 = MOTOR_ENABLED;
 			}
 
 			moveToPositionSmooth2(targetStep);
 			lastStablePotValue2 = potValue;
 		}
-		else if(motorEnabled2 == MOTOR_ENABLED2 &&
+		else if(motorEnabled2 == MOTOR_ENABLED &&
 				abs(targetStep - lastStepPosition2) <= POSITION_TOLERANCE) {
 			HAL_GPIO_WritePin(GPIOE, GPIO_PIN_8, GPIO_PIN_SET);
-			motorEnabled2 = MOTOR_DISABLED2;
+			motorEnabled2 = MOTOR_DISABLED;
 		}
 
 		osDelay(10); // Delay using FreeRTOS (10ms delay)
