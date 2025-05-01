@@ -113,6 +113,13 @@ const osThreadAttr_t Fifth_attributes = {
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
+/* Definitions for Sixth */
+osThreadId_t SixthHandle;
+const osThreadAttr_t Sixth_attributes = {
+  .name = "Sixth",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
+};
 /* USER CODE BEGIN PV */
 MotorController motor1 = {
 		.enablePort = GPIOE, .enablePin = GPIO_PIN_12,
@@ -173,6 +180,18 @@ MotorController motor5 = {
 		.lastMovementDirection = 0,
 		.currentSpeed = BASE_PULSE_WIDTH
 };
+
+MotorController motor6 = {
+		.enablePort = GPIOD, .enablePin = GPIO_PIN_15,
+		.directionPort = GPIOD, .directionPin = GPIO_PIN_14,
+		.stepPort = GPIOD, .stepPin = GPIO_PIN_13,
+		.hadc = &hadc1, .adcChannel = ADC_CHANNEL_18,
+		.lastStepPosition = 0,
+		.enabled = MOTOR_DISABLED,
+		.lastStablePotValue = 0,
+		.lastMovementDirection = 0,
+		.currentSpeed = BASE_PULSE_WIDTH
+};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -186,6 +205,7 @@ void SecondMotor(void *argument);
 void ThirdMotor(void *argument);
 void FourthMotor(void *argument);
 void FifthMotor(void *argument);
+void SixthMotor(void *argument);
 
 /* USER CODE BEGIN PFP */
 int readStablePot(MotorController* motor);
@@ -426,6 +446,9 @@ int main(void)
 
   /* creation of Fifth */
   FifthHandle = osThreadNew(FifthMotor, NULL, &Fifth_attributes);
+
+  /* creation of Sixth */
+  SixthHandle = osThreadNew(SixthMotor, NULL, &Sixth_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
 	/* add threads, ... */
@@ -690,7 +713,8 @@ static void MX_GPIO_Init(void)
                           |DIR_Motro1_Pin|ENA_Motor1_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOD, PUL_Motor5_Pin|DIR_Motor5_Pin|ENA_Motor5_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOD, PUL_Motor5_Pin|DIR_Motor5_Pin|ENA_Motor5_Pin|PUL_Motor6_Pin
+                          |DIR_Motor6_Pin|ENA_Motor6_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOC, PUL_Motor2_Pin|DIR_Motor2_Pin|ENA_Motor2_Pin, GPIO_PIN_RESET);
@@ -711,8 +735,10 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PUL_Motor5_Pin DIR_Motor5_Pin ENA_Motor5_Pin */
-  GPIO_InitStruct.Pin = PUL_Motor5_Pin|DIR_Motor5_Pin|ENA_Motor5_Pin;
+  /*Configure GPIO pins : PUL_Motor5_Pin DIR_Motor5_Pin ENA_Motor5_Pin PUL_Motor6_Pin
+                           DIR_Motor6_Pin ENA_Motor6_Pin */
+  GPIO_InitStruct.Pin = PUL_Motor5_Pin|DIR_Motor5_Pin|ENA_Motor5_Pin|PUL_Motor6_Pin
+                          |DIR_Motor6_Pin|ENA_Motor6_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -957,6 +983,51 @@ void FifthMotor(void *argument)
 		osDelay(10); // Delay using FreeRTOS (10ms delay)
 	}
   /* USER CODE END FifthMotor */
+}
+
+/* USER CODE BEGIN Header_SixthMotor */
+/**
+* @brief Function implementing the Sixth thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_SixthMotor */
+void SixthMotor(void *argument)
+{
+  /* USER CODE BEGIN SixthMotor */
+	// Initialize motor state
+	HAL_GPIO_WritePin(motor6.enablePort, motor6.enablePin, GPIO_PIN_SET);
+	motor6.enabled = MOTOR_DISABLED;
+	motor6.lastStablePotValue = readStablePot(&motor5);
+
+	/* Infinite loop */
+	for(;;)
+	{
+		int potValue = readStablePot(&motor5);
+		int targetStep = (int)((float)potValue / 65535.0f * (StepPerRevolution-1));
+
+		// Only react to significant pot changes with hysteresis
+		int potDifference = abs(potValue - motor6.lastStablePotValue);
+
+		if(potDifference > POT_DEADZONE ||
+				(motor6.enabled == MOTOR_ENABLED && potDifference > POT_DEADZONE/2)) {
+			if(motor6.enabled == MOTOR_DISABLED) {
+				HAL_GPIO_WritePin(motor6.enablePort, motor6.enablePin, GPIO_PIN_RESET);
+				motor6.enabled = MOTOR_ENABLED;
+			}
+
+			moveToPositionSmooth(&motor6, targetStep);
+			motor6.lastStablePotValue = potValue;
+		}
+		else if(motor6.enabled == MOTOR_ENABLED &&
+				abs(targetStep - motor6.lastStepPosition) <= POSITION_TOLERANCE) {
+			HAL_GPIO_WritePin(motor5.enablePort, motor6.enablePin, GPIO_PIN_SET);
+			motor6.enabled = MOTOR_DISABLED;
+		}
+
+		osDelay(10); // Delay using FreeRTOS (10ms delay)
+	}
+  /* USER CODE END SixthMotor */
 }
 
  /* MPU Configuration */
