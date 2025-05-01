@@ -292,7 +292,8 @@ Discarded input sections
  .text          0x00000000        0x0 ./Core/Src/main.o
  .data          0x00000000        0x0 ./Core/Src/main.o
  .bss           0x00000000        0x0 ./Core/Src/main.o
- .bss.adcValue  0x00000000        0x4 ./Core/Src/main.o
+ .bss.adcValue1
+                0x00000000        0x4 ./Core/Src/main.o
  .bss.adcValue2
                 0x00000000        0x4 ./Core/Src/main.o
  .debug_macro   0x00000000      0xaf6 ./Core/Src/main.o
@@ -7230,9 +7231,9 @@ LOAD M:/Mostafa Ramadan/programming/STM32CubeIDE_1.18.0/STM32CubeIDE/plugins/com
                 0x24000000                        _sdata = .
  *(.data)
  *(.data*)
- .data.currentSpeed
+ .data.currentSpeed1
                 0x24000000        0x4 ./Core/Src/main.o
-                0x24000000                currentSpeed
+                0x24000000                currentSpeed1
  .data.currentSpeed2
                 0x24000004        0x4 ./Core/Src/main.o
                 0x24000004                currentSpeed2
@@ -7276,19 +7277,19 @@ LOAD M:/Mostafa Ramadan/programming/STM32CubeIDE_1.18.0/STM32CubeIDE/plugins/com
  .bss.SecondHandle
                 0x240000ec        0x4 ./Core/Src/main.o
                 0x240000ec                SecondHandle
- .bss.lastStepPosition
+ .bss.lastStepPosition1
                 0x240000f0        0x4 ./Core/Src/main.o
-                0x240000f0                lastStepPosition
- .bss.motorEnabled
+                0x240000f0                lastStepPosition1
+ .bss.motorEnabled1
                 0x240000f4        0x1 ./Core/Src/main.o
-                0x240000f4                motorEnabled
+                0x240000f4                motorEnabled1
  *fill*         0x240000f5        0x3 
- .bss.lastStablePotValue
+ .bss.lastStablePotValue1
                 0x240000f8        0x4 ./Core/Src/main.o
-                0x240000f8                lastStablePotValue
- .bss.lastMovementDirection
+                0x240000f8                lastStablePotValue1
+ .bss.lastMovementDirection1
                 0x240000fc        0x4 ./Core/Src/main.o
-                0x240000fc                lastMovementDirection
+                0x240000fc                lastMovementDirection1
  .bss.lastStepPosition2
                 0x24000100        0x4 ./Core/Src/main.o
                 0x24000100                lastStepPosition2
@@ -7713,31 +7714,31 @@ LOAD M:/Mostafa Ramadan/programming/STM32CubeIDE_1.18.0/STM32CubeIDE/plugins/com
  .debug_line    0x0001b5bd      0x7e5 ./Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/port.o
  .debug_line    0x0001bda2      0x990 ./Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang/heap_4.o
 
-.debug_str      0x00000000   0x17d304
- .debug_str     0x00000000   0x17d304 ./Core/Src/main.o
-                             0x173043 (size before relaxing)
- .debug_str     0x0017d304   0x16e28a ./Core/Src/stm32h7xx_hal_msp.o
- .debug_str     0x0017d304   0x16dcc6 ./Core/Src/stm32h7xx_hal_timebase_tim.o
- .debug_str     0x0017d304   0x16d15f ./Core/Src/stm32h7xx_it.o
- .debug_str     0x0017d304   0x16d02b ./Core/Src/system_stm32h7xx.o
- .debug_str     0x0017d304       0x8b ./Core/Startup/startup_stm32h750vbtx.o
- .debug_str     0x0017d304   0x16df11 ./Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal.o
- .debug_str     0x0017d304   0x16dda9 ./Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_adc.o
- .debug_str     0x0017d304   0x16dde8 ./Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_adc_ex.o
- .debug_str     0x0017d304   0x16d94c ./Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_cortex.o
- .debug_str     0x0017d304   0x16cfa3 ./Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_gpio.o
- .debug_str     0x0017d304   0x16d464 ./Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_pwr_ex.o
- .debug_str     0x0017d304   0x16d387 ./Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_rcc.o
- .debug_str     0x0017d304   0x16d868 ./Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_rcc_ex.o
- .debug_str     0x0017d304   0x16e126 ./Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_tim.o
- .debug_str     0x0017d304   0x16da4e ./Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_tim_ex.o
- .debug_str     0x0017d304   0x174b9a ./Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os2.o
- .debug_str     0x0017d304     0xac7b ./Middlewares/Third_Party/FreeRTOS/Source/list.o
- .debug_str     0x0017d304     0xc7bb ./Middlewares/Third_Party/FreeRTOS/Source/queue.o
- .debug_str     0x0017d304     0xd278 ./Middlewares/Third_Party/FreeRTOS/Source/tasks.o
- .debug_str     0x0017d304     0xcced ./Middlewares/Third_Party/FreeRTOS/Source/timers.o
- .debug_str     0x0017d304     0x8821 ./Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/port.o
- .debug_str     0x0017d304     0xb5bd ./Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang/heap_4.o
+.debug_str      0x00000000   0x17d310
+ .debug_str     0x00000000   0x17d310 ./Core/Src/main.o
+                             0x173049 (size before relaxing)
+ .debug_str     0x0017d310   0x16e28a ./Core/Src/stm32h7xx_hal_msp.o
+ .debug_str     0x0017d310   0x16dcc6 ./Core/Src/stm32h7xx_hal_timebase_tim.o
+ .debug_str     0x0017d310   0x16d15f ./Core/Src/stm32h7xx_it.o
+ .debug_str     0x0017d310   0x16d02b ./Core/Src/system_stm32h7xx.o
+ .debug_str     0x0017d310       0x8b ./Core/Startup/startup_stm32h750vbtx.o
+ .debug_str     0x0017d310   0x16df11 ./Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal.o
+ .debug_str     0x0017d310   0x16dda9 ./Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_adc.o
+ .debug_str     0x0017d310   0x16dde8 ./Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_adc_ex.o
+ .debug_str     0x0017d310   0x16d94c ./Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_cortex.o
+ .debug_str     0x0017d310   0x16cfa3 ./Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_gpio.o
+ .debug_str     0x0017d310   0x16d464 ./Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_pwr_ex.o
+ .debug_str     0x0017d310   0x16d387 ./Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_rcc.o
+ .debug_str     0x0017d310   0x16d868 ./Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_rcc_ex.o
+ .debug_str     0x0017d310   0x16e126 ./Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_tim.o
+ .debug_str     0x0017d310   0x16da4e ./Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_tim_ex.o
+ .debug_str     0x0017d310   0x174b9a ./Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os2.o
+ .debug_str     0x0017d310     0xac7b ./Middlewares/Third_Party/FreeRTOS/Source/list.o
+ .debug_str     0x0017d310     0xc7bb ./Middlewares/Third_Party/FreeRTOS/Source/queue.o
+ .debug_str     0x0017d310     0xd278 ./Middlewares/Third_Party/FreeRTOS/Source/tasks.o
+ .debug_str     0x0017d310     0xcced ./Middlewares/Third_Party/FreeRTOS/Source/timers.o
+ .debug_str     0x0017d310     0x8821 ./Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/port.o
+ .debug_str     0x0017d310     0xb5bd ./Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang/heap_4.o
 
 .comment        0x00000000       0x43
  .comment       0x00000000       0x43 ./Core/Src/main.o
