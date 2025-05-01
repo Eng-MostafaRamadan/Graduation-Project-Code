@@ -63,6 +63,12 @@ void Error_Handler(void);
 #define DIR_Motor3_GPIO_Port GPIOB
 #define ENA_Motor3_Pin GPIO_PIN_2
 #define ENA_Motor3_GPIO_Port GPIOB
+#define PUL_Motor4_Pin GPIO_PIN_7
+#define PUL_Motor4_GPIO_Port GPIOE
+#define DIR_Motor4_Pin GPIO_PIN_8
+#define DIR_Motor4_GPIO_Port GPIOE
+#define ENA_Motor4_Pin GPIO_PIN_9
+#define ENA_Motor4_GPIO_Port GPIOE
 #define PUL_Motor1_Pin GPIO_PIN_10
 #define PUL_Motor1_GPIO_Port GPIOE
 #define DIR_Motro1_Pin GPIO_PIN_11

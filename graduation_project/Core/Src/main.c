@@ -99,6 +99,13 @@ const osThreadAttr_t Third_attributes = {
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
+/* Definitions for Fourth */
+osThreadId_t FourthHandle;
+const osThreadAttr_t Fourth_attributes = {
+  .name = "Fourth",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
+};
 /* USER CODE BEGIN PV */
 MotorController motor1 = {
     .enablePort = GPIOE, .enablePin = GPIO_PIN_12,
@@ -135,6 +142,18 @@ MotorController motor3 = {
     .lastMovementDirection = 0,
     .currentSpeed = BASE_PULSE_WIDTH
 };
+
+MotorController motor4 = {
+    .enablePort = GPIOE, .enablePin = GPIO_PIN_9,
+    .directionPort = GPIOE, .directionPin = GPIO_PIN_8,
+    .stepPort = GPIOE, .stepPin = GPIO_PIN_7,
+    .hadc = &hadc1, .adcChannel = ADC_CHANNEL_16,
+    .lastStepPosition = 0,
+    .enabled = MOTOR_DISABLED,
+    .lastStablePotValue = 0,
+    .lastMovementDirection = 0,
+    .currentSpeed = BASE_PULSE_WIDTH
+};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -146,9 +165,7 @@ static void MX_TIM8_Init(void);
 void FirstMotor(void *argument);
 void SecondMotor(void *argument);
 void ThirdMotor(void *argument);
-//void FirstMotor(void *argument);
-//void SecondMotor(void *argument);
-//void ThirdMotor(void *argument);
+void FourthMotor(void *argument);
 
 /* USER CODE BEGIN PFP */
 int readStablePot(MotorController* motor);
@@ -159,9 +176,15 @@ void HAL_Delay_us(uint32_t microseconds);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 int readStablePot(MotorController* motor) {
-    static int samples[3][POT_SAMPLES]; // One buffer per motor
-    static int indices[3] = {0};
-    int motorIndex = (motor == &motor1) ? 0 : (motor == &motor2) ? 1 : 2;
+    static int samples[4][POT_SAMPLES]; // Changed to 4 motors
+    static int indices[4] = {0};       // Changed to 4 motors
+    int motorIndex;
+
+    // Determine motor index
+    if(motor == &motor1) motorIndex = 0;
+    else if(motor == &motor2) motorIndex = 1;
+    else if(motor == &motor3) motorIndex = 2;
+    else motorIndex = 3;  // Added for motor4
 
     // Configure ADC for this motor's channel
     ADC_ChannelConfTypeDef sConfig = {0};
@@ -182,7 +205,7 @@ int readStablePot(MotorController* motor) {
 
     // Exponential moving average
     float alpha = 0.2f;
-    static float filteredValues[3] = {0};
+    static float filteredValues[4] = {0};  // Changed to 4 motors
     if (filteredValues[motorIndex] == 0) {
         filteredValues[motorIndex] = samples[motorIndex][0];
     }
@@ -344,6 +367,7 @@ int main(void)
 	  HAL_GPIO_WritePin(motor1.enablePort, motor1.enablePin, GPIO_PIN_SET);
 	  HAL_GPIO_WritePin(motor2.enablePort, motor2.enablePin, GPIO_PIN_SET);
 	  HAL_GPIO_WritePin(motor3.enablePort, motor3.enablePin, GPIO_PIN_SET);
+	  HAL_GPIO_WritePin(motor4.enablePort, motor4.enablePin, GPIO_PIN_SET);
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -367,13 +391,16 @@ int main(void)
 
   /* Create the thread(s) */
   /* creation of First */
-  FirstHandle = osThreadNew(MotorThread, &motor1, &First_attributes);
+  FirstHandle = osThreadNew(FirstMotor, NULL, &First_attributes);
 
   /* creation of Second */
-  SecondHandle = osThreadNew(MotorThread, &motor2, &Second_attributes);
+  SecondHandle = osThreadNew(SecondMotor, NULL, &Second_attributes);
 
   /* creation of Third */
-  ThirdHandle = osThreadNew(MotorThread, &motor3, &Third_attributes);
+  ThirdHandle = osThreadNew(ThirdMotor, NULL, &Third_attributes);
+
+  /* creation of Fourth */
+  FourthHandle = osThreadNew(FourthMotor, NULL, &Fourth_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
 	/* add threads, ... */
@@ -486,7 +513,7 @@ static void MX_ADC1_Init(void)
   hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
   hadc1.Init.LowPowerAutoWait = DISABLE;
   hadc1.Init.ContinuousConvMode = DISABLE;
-  hadc1.Init.NbrOfConversion = 3;
+  hadc1.Init.NbrOfConversion = 4;
   hadc1.Init.DiscontinuousConvMode = DISABLE;
   hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
   hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
@@ -535,6 +562,15 @@ static void MX_ADC1_Init(void)
   */
   sConfig.Channel = ADC_CHANNEL_17;
   sConfig.Rank = ADC_REGULAR_RANK_3;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure Regular Channel
+  */
+  sConfig.Channel = ADC_CHANNEL_16;
+  sConfig.Rank = ADC_REGULAR_RANK_4;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {
     Error_Handler();
@@ -615,7 +651,8 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOB, PUL_Motor3_Pin|DIR_Motor3_Pin|ENA_Motor3_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOE, PUL_Motor1_Pin|DIR_Motro1_Pin|ENA_Motor1_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOE, PUL_Motor4_Pin|DIR_Motor4_Pin|ENA_Motor4_Pin|PUL_Motor1_Pin
+                          |DIR_Motro1_Pin|ENA_Motor1_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOC, PUL_Motor2_Pin|DIR_Motor2_Pin|ENA_Motor2_Pin, GPIO_PIN_RESET);
@@ -627,8 +664,10 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PUL_Motor1_Pin DIR_Motro1_Pin ENA_Motor1_Pin */
-  GPIO_InitStruct.Pin = PUL_Motor1_Pin|DIR_Motro1_Pin|ENA_Motor1_Pin;
+  /*Configure GPIO pins : PUL_Motor4_Pin DIR_Motor4_Pin ENA_Motor4_Pin PUL_Motor1_Pin
+                           DIR_Motro1_Pin ENA_Motor1_Pin */
+  GPIO_InitStruct.Pin = PUL_Motor4_Pin|DIR_Motor4_Pin|ENA_Motor4_Pin|PUL_Motor1_Pin
+                          |DIR_Motro1_Pin|ENA_Motor1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -695,6 +734,13 @@ void FirstMotor(void *argument)
   /* USER CODE END 5 */
 }
 
+/* USER CODE BEGIN Header_SecondMotor */
+/**
+* @brief Function implementing the Second thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_SecondMotor */
 void SecondMotor(void *argument)
 {
   /* USER CODE BEGIN SecondMotor */
@@ -733,6 +779,13 @@ void SecondMotor(void *argument)
   /* USER CODE END SecondMotor */
 }
 
+/* USER CODE BEGIN Header_ThirdMotor */
+/**
+* @brief Function implementing the Third thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_ThirdMotor */
 void ThirdMotor(void *argument)
 {
   /* USER CODE BEGIN ThirdMotor */
@@ -771,6 +824,50 @@ void ThirdMotor(void *argument)
   /* USER CODE END ThirdMotor */
 }
 
+/* USER CODE BEGIN Header_FourthMotor */
+/**
+* @brief Function implementing the Fourth thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_FourthMotor */
+void FourthMotor(void *argument)
+{
+  /* USER CODE BEGIN FourthMotor */
+    // Initialize motor state
+    HAL_GPIO_WritePin(motor4.enablePort, motor4.enablePin, GPIO_PIN_SET);
+    motor4.enabled = MOTOR_DISABLED;
+    motor4.lastStablePotValue = readStablePot(&motor4);
+
+    /* Infinite loop */
+    for(;;)
+    {
+        int potValue = readStablePot(&motor4);
+        int targetStep = (int)((float)potValue / 65535.0f * (StepPerRevolution-1));
+
+        // Only react to significant pot changes with hysteresis
+        int potDifference = abs(potValue - motor4.lastStablePotValue);
+
+        if(potDifference > POT_DEADZONE ||
+                (motor4.enabled == MOTOR_ENABLED && potDifference > POT_DEADZONE/2)) {
+            if(motor4.enabled == MOTOR_DISABLED) {
+                HAL_GPIO_WritePin(motor4.enablePort, motor4.enablePin, GPIO_PIN_RESET);
+                motor4.enabled = MOTOR_ENABLED;
+            }
+
+            moveToPositionSmooth(&motor4, targetStep);
+            motor4.lastStablePotValue = potValue;
+        }
+        else if(motor4.enabled == MOTOR_ENABLED &&
+                abs(targetStep - motor4.lastStepPosition) <= POSITION_TOLERANCE) {
+            HAL_GPIO_WritePin(motor4.enablePort, motor4.enablePin, GPIO_PIN_SET);
+            motor4.enabled = MOTOR_DISABLED;
+        }
+
+        osDelay(10); // Delay using FreeRTOS (10ms delay)
+    }
+  /* USER CODE END FourthMotor */
+}
 
  /* MPU Configuration */
 
