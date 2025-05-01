@@ -36,19 +36,19 @@ typedef enum {
 } MotorState;
 
 typedef struct {
-    GPIO_TypeDef* enablePort;
-    uint16_t enablePin;
-    GPIO_TypeDef* directionPort;
-    uint16_t directionPin;
-    GPIO_TypeDef* stepPort;
-    uint16_t stepPin;
-    ADC_HandleTypeDef* hadc;
-    uint32_t adcChannel;
-    int lastStepPosition;
-    MotorState enabled;
-    int lastStablePotValue;
-    int lastMovementDirection;
-    int currentSpeed;
+	GPIO_TypeDef* enablePort;
+	uint16_t enablePin;
+	GPIO_TypeDef* directionPort;
+	uint16_t directionPin;
+	GPIO_TypeDef* stepPort;
+	uint16_t stepPin;
+	ADC_HandleTypeDef* hadc;
+	uint32_t adcChannel;
+	int lastStepPosition;
+	MotorState enabled;
+	int lastStablePotValue;
+	int lastMovementDirection;
+	int currentSpeed;
 } MotorController;
 /* USER CODE END PTD */
 
@@ -106,84 +106,72 @@ const osThreadAttr_t Fourth_attributes = {
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
-/* Definitions for FifthAndSixth */
-osThreadId_t FifthAndSixthHandle;
-const osThreadAttr_t FifthAndSixth_attributes = {
-  .name = "FifthAndSixth",
+/* Definitions for Fifth */
+osThreadId_t FifthHandle;
+const osThreadAttr_t Fifth_attributes = {
+  .name = "Fifth",
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
 /* USER CODE BEGIN PV */
 MotorController motor1 = {
-    .enablePort = GPIOE, .enablePin = GPIO_PIN_12,
-    .directionPort = GPIOE, .directionPin = GPIO_PIN_11,
-    .stepPort = GPIOE, .stepPin = GPIO_PIN_10,
-    .hadc = &hadc1, .adcChannel = ADC_CHANNEL_15,
-    .lastStepPosition = 0,
-    .enabled = MOTOR_DISABLED,
-    .lastStablePotValue = 0,
-    .lastMovementDirection = 0,
-    .currentSpeed = BASE_PULSE_WIDTH
+		.enablePort = GPIOE, .enablePin = GPIO_PIN_12,
+		.directionPort = GPIOE, .directionPin = GPIO_PIN_11,
+		.stepPort = GPIOE, .stepPin = GPIO_PIN_10,
+		.hadc = &hadc1, .adcChannel = ADC_CHANNEL_15,
+		.lastStepPosition = 0,
+		.enabled = MOTOR_DISABLED,
+		.lastStablePotValue = 0,
+		.lastMovementDirection = 0,
+		.currentSpeed = BASE_PULSE_WIDTH
 };
 
 MotorController motor2 = {
-    .enablePort = GPIOC, .enablePin = GPIO_PIN_8,
-    .directionPort = GPIOC, .directionPin = GPIO_PIN_7,
-    .stepPort = GPIOC, .stepPin = GPIO_PIN_6,
-    .hadc = &hadc1, .adcChannel = ADC_CHANNEL_14,
-    .lastStepPosition = 0,
-    .enabled = MOTOR_DISABLED,
-    .lastStablePotValue = 0,
-    .lastMovementDirection = 0,
-    .currentSpeed = BASE_PULSE_WIDTH
+		.enablePort = GPIOC, .enablePin = GPIO_PIN_8,
+		.directionPort = GPIOC, .directionPin = GPIO_PIN_7,
+		.stepPort = GPIOC, .stepPin = GPIO_PIN_6,
+		.hadc = &hadc1, .adcChannel = ADC_CHANNEL_14,
+		.lastStepPosition = 0,
+		.enabled = MOTOR_DISABLED,
+		.lastStablePotValue = 0,
+		.lastMovementDirection = 0,
+		.currentSpeed = BASE_PULSE_WIDTH
 };
 
 MotorController motor3 = {
-    .enablePort = GPIOB, .enablePin = GPIO_PIN_2,
-    .directionPort = GPIOB, .directionPin = GPIO_PIN_1,
-    .stepPort = GPIOB, .stepPin = GPIO_PIN_0,
-    .hadc = &hadc1, .adcChannel = ADC_CHANNEL_17,
-    .lastStepPosition = 0,
-    .enabled = MOTOR_DISABLED,
-    .lastStablePotValue = 0,
-    .lastMovementDirection = 0,
-    .currentSpeed = BASE_PULSE_WIDTH
+		.enablePort = GPIOB, .enablePin = GPIO_PIN_2,
+		.directionPort = GPIOB, .directionPin = GPIO_PIN_1,
+		.stepPort = GPIOB, .stepPin = GPIO_PIN_0,
+		.hadc = &hadc1, .adcChannel = ADC_CHANNEL_17,
+		.lastStepPosition = 0,
+		.enabled = MOTOR_DISABLED,
+		.lastStablePotValue = 0,
+		.lastMovementDirection = 0,
+		.currentSpeed = BASE_PULSE_WIDTH
 };
 
 MotorController motor4 = {
-    .enablePort = GPIOE, .enablePin = GPIO_PIN_9,
-    .directionPort = GPIOE, .directionPin = GPIO_PIN_8,
-    .stepPort = GPIOE, .stepPin = GPIO_PIN_7,
-    .hadc = &hadc1, .adcChannel = ADC_CHANNEL_16,
-    .lastStepPosition = 0,
-    .enabled = MOTOR_DISABLED,
-    .lastStablePotValue = 0,
-    .lastMovementDirection = 0,
-    .currentSpeed = BASE_PULSE_WIDTH
+		.enablePort = GPIOE, .enablePin = GPIO_PIN_9,
+		.directionPort = GPIOE, .directionPin = GPIO_PIN_8,
+		.stepPort = GPIOE, .stepPin = GPIO_PIN_7,
+		.hadc = &hadc1, .adcChannel = ADC_CHANNEL_16,
+		.lastStepPosition = 0,
+		.enabled = MOTOR_DISABLED,
+		.lastStablePotValue = 0,
+		.lastMovementDirection = 0,
+		.currentSpeed = BASE_PULSE_WIDTH
 };
 
 MotorController motor5 = {
-    .enablePort = GPIOD, .enablePin = GPIO_PIN_12,
-    .directionPort = GPIOD, .directionPin = GPIO_PIN_11,
-    .stepPort = GPIOD, .stepPin = GPIO_PIN_10,
-    .hadc = &hadc1, .adcChannel = ADC_CHANNEL_18,
-    .lastStepPosition = 0,
-    .enabled = MOTOR_DISABLED,
-    .lastStablePotValue = 0,
-    .lastMovementDirection = 0,
-    .currentSpeed = BASE_PULSE_WIDTH
-};
-
-MotorController motor6 = {
-    .enablePort = GPIOD, .enablePin = GPIO_PIN_15,
-    .directionPort = GPIOD, .directionPin = GPIO_PIN_14,
-    .stepPort = GPIOD, .stepPin = GPIO_PIN_13,
-    .hadc = &hadc1, .adcChannel = ADC_CHANNEL_18,
-    .lastStepPosition = 0,
-    .enabled = MOTOR_DISABLED,
-    .lastStablePotValue = 0,
-    .lastMovementDirection = 0,
-    .currentSpeed = BASE_PULSE_WIDTH
+		.enablePort = GPIOD, .enablePin = GPIO_PIN_12,
+		.directionPort = GPIOD, .directionPin = GPIO_PIN_11,
+		.stepPort = GPIOD, .stepPin = GPIO_PIN_10,
+		.hadc = &hadc1, .adcChannel = ADC_CHANNEL_18,
+		.lastStepPosition = 0,
+		.enabled = MOTOR_DISABLED,
+		.lastStablePotValue = 0,
+		.lastMovementDirection = 0,
+		.currentSpeed = BASE_PULSE_WIDTH
 };
 /* USER CODE END PV */
 
@@ -197,7 +185,7 @@ void FirstMotor(void *argument);
 void SecondMotor(void *argument);
 void ThirdMotor(void *argument);
 void FourthMotor(void *argument);
-void FifthAndSixthMotor(void *argument);
+void FifthMotor(void *argument);
 
 /* USER CODE BEGIN PFP */
 int readStablePot(MotorController* motor);
@@ -208,15 +196,16 @@ void HAL_Delay_us(uint32_t microseconds);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 int readStablePot(MotorController* motor) {
-    static int samples[4][POT_SAMPLES]; // Changed to 4 motors
-    static int indices[4] = {0};       // Changed to 4 motors
+    static int samples[5][POT_SAMPLES]; // Changed to 4 motors
+    static int indices[5] = {0};       // Changed to 4 motors
     int motorIndex;
 
     // Determine motor index
     if(motor == &motor1) motorIndex = 0;
     else if(motor == &motor2) motorIndex = 1;
     else if(motor == &motor3) motorIndex = 2;
-    else motorIndex = 3;  // Added for motor4
+    else if(motor == &motor4) motorIndex = 3;
+    else motorIndex = 4;  // Added for motor4
 
     // Configure ADC for this motor's channel
     ADC_ChannelConfTypeDef sConfig = {0};
@@ -237,7 +226,7 @@ int readStablePot(MotorController* motor) {
 
     // Exponential moving average
     float alpha = 0.2f;
-    static float filteredValues[4] = {0};  // Changed to 4 motors
+    static float filteredValues[5] = {0};  // Changed to 4 motors
     if (filteredValues[motorIndex] == 0) {
         filteredValues[motorIndex] = samples[motorIndex][0];
     }
@@ -251,106 +240,106 @@ int readStablePot(MotorController* motor) {
 }
 
 void moveToPositionSmooth(MotorController* motor, int targetStep) {
-    int direction;
-    int totalSteps = abs(targetStep - motor->lastStepPosition);
+	int direction;
+	int totalSteps = abs(targetStep - motor->lastStepPosition);
 
-    if (totalSteps < MIN_MOVE_STEPS) {
-        return;
-    }
+	if (totalSteps < MIN_MOVE_STEPS) {
+		return;
+	}
 
-    direction = (targetStep > motor->lastStepPosition) ? 1 : -1;
+	direction = (targetStep > motor->lastStepPosition) ? 1 : -1;
 
-    if ((direction * motor->lastMovementDirection) < 0 &&
-        totalSteps < (POSITION_TOLERANCE*2)) {
-        direction = motor->lastMovementDirection;
-        totalSteps = abs(targetStep - motor->lastStepPosition);
-    }
+	if ((direction * motor->lastMovementDirection) < 0 &&
+			totalSteps < (POSITION_TOLERANCE*2)) {
+		direction = motor->lastMovementDirection;
+		totalSteps = abs(targetStep - motor->lastStepPosition);
+	}
 
-    if (totalSteps > StepPerRevolution/2) {
-        direction *= -1;
-        totalSteps = StepPerRevolution - totalSteps;
-    }
+	if (totalSteps > StepPerRevolution/2) {
+		direction *= -1;
+		totalSteps = StepPerRevolution - totalSteps;
+	}
 
-    HAL_GPIO_WritePin(motor->directionPort, motor->directionPin,
-                      (direction > 0) ? GPIO_PIN_SET : GPIO_PIN_RESET);
-    motor->lastMovementDirection = direction;
+	HAL_GPIO_WritePin(motor->directionPort, motor->directionPin,
+			(direction > 0) ? GPIO_PIN_SET : GPIO_PIN_RESET);
+	motor->lastMovementDirection = direction;
 
-    int accelSteps = min(ACCELERATION_STEPS, totalSteps/2);
-    int decelStart = totalSteps - accelSteps;
+	int accelSteps = min(ACCELERATION_STEPS, totalSteps/2);
+	int decelStart = totalSteps - accelSteps;
 
-    for (int i = 0; i < totalSteps; i++) {
-        int targetPulseWidth = BASE_PULSE_WIDTH;
+	for (int i = 0; i < totalSteps; i++) {
+		int targetPulseWidth = BASE_PULSE_WIDTH;
 
-        if (i < accelSteps) {
-            float progress = (float)i / accelSteps;
-            targetPulseWidth = BASE_PULSE_WIDTH*2 - (BASE_PULSE_WIDTH * progress * progress * progress);
-        }
-        else if (i >= decelStart) {
-            float progress = (float)(i-decelStart) / accelSteps;
-            targetPulseWidth = BASE_PULSE_WIDTH + (BASE_PULSE_WIDTH * progress * progress * progress);
-        }
+		if (i < accelSteps) {
+			float progress = (float)i / accelSteps;
+			targetPulseWidth = BASE_PULSE_WIDTH*2 - (BASE_PULSE_WIDTH * progress * progress * progress);
+		}
+		else if (i >= decelStart) {
+			float progress = (float)(i-decelStart) / accelSteps;
+			targetPulseWidth = BASE_PULSE_WIDTH + (BASE_PULSE_WIDTH * progress * progress * progress);
+		}
 
-        if (abs(targetPulseWidth - motor->currentSpeed) > MAX_SPEED_CHANGE) {
-            if (targetPulseWidth < motor->currentSpeed) {
-                targetPulseWidth = motor->currentSpeed - MAX_SPEED_CHANGE;
-            } else {
-                targetPulseWidth = motor->currentSpeed + MAX_SPEED_CHANGE;
-            }
-        }
-        motor->currentSpeed = targetPulseWidth;
+		if (abs(targetPulseWidth - motor->currentSpeed) > MAX_SPEED_CHANGE) {
+			if (targetPulseWidth < motor->currentSpeed) {
+				targetPulseWidth = motor->currentSpeed - MAX_SPEED_CHANGE;
+			} else {
+				targetPulseWidth = motor->currentSpeed + MAX_SPEED_CHANGE;
+			}
+		}
+		motor->currentSpeed = targetPulseWidth;
 
-        HAL_GPIO_WritePin(motor->stepPort, motor->stepPin, GPIO_PIN_SET);
-        HAL_Delay_us(targetPulseWidth/2);
-        HAL_GPIO_WritePin(motor->stepPort, motor->stepPin, GPIO_PIN_RESET);
-        HAL_Delay_us(targetPulseWidth/2);
+		HAL_GPIO_WritePin(motor->stepPort, motor->stepPin, GPIO_PIN_SET);
+		HAL_Delay_us(targetPulseWidth/2);
+		HAL_GPIO_WritePin(motor->stepPort, motor->stepPin, GPIO_PIN_RESET);
+		HAL_Delay_us(targetPulseWidth/2);
 
-        motor->lastStepPosition += direction;
-        if (motor->lastStepPosition >= StepPerRevolution) motor->lastStepPosition = 0;
-        if (motor->lastStepPosition < 0) motor->lastStepPosition = StepPerRevolution - 1;
-    }
+		motor->lastStepPosition += direction;
+		if (motor->lastStepPosition >= StepPerRevolution) motor->lastStepPosition = 0;
+		if (motor->lastStepPosition < 0) motor->lastStepPosition = StepPerRevolution - 1;
+	}
 }
 
 // Microsecond delay function
 void HAL_Delay_us(uint32_t microseconds) {
-    uint32_t start = DWT->CYCCNT;
-    uint32_t cycles = (SystemCoreClock / 1000000) * microseconds;
+	uint32_t start = DWT->CYCCNT;
+	uint32_t cycles = (SystemCoreClock / 1000000) * microseconds;
 
-    while ((DWT->CYCCNT - start) < cycles) {
-        // Wait
-    }
+	while ((DWT->CYCCNT - start) < cycles) {
+		// Wait
+	}
 }
 void MotorThread(void* argument) {
-    MotorController* motor = (MotorController*)argument;
+	MotorController* motor = (MotorController*)argument;
 
-    // Initialize motor state
-    HAL_GPIO_WritePin(motor->enablePort, motor->enablePin, GPIO_PIN_SET);
-    motor->enabled = MOTOR_DISABLED;
-    motor->lastStablePotValue = readStablePot(motor);
+	// Initialize motor state
+	HAL_GPIO_WritePin(motor->enablePort, motor->enablePin, GPIO_PIN_SET);
+	motor->enabled = MOTOR_DISABLED;
+	motor->lastStablePotValue = readStablePot(motor);
 
-    for (;;) {
-        int potValue = readStablePot(motor);
-        int targetStep = (int)((float)potValue / 65535.0f * (StepPerRevolution-1));
+	for (;;) {
+		int potValue = readStablePot(motor);
+		int targetStep = (int)((float)potValue / 65535.0f * (StepPerRevolution-1));
 
-        int potDifference = abs(potValue - motor->lastStablePotValue);
+		int potDifference = abs(potValue - motor->lastStablePotValue);
 
-        if (potDifference > POT_DEADZONE ||
-            (motor->enabled == MOTOR_ENABLED && potDifference > POT_DEADZONE/2)) {
-            if (motor->enabled == MOTOR_DISABLED) {
-                HAL_GPIO_WritePin(motor->enablePort, motor->enablePin, GPIO_PIN_RESET);
-                motor->enabled = MOTOR_ENABLED;
-            }
+		if (potDifference > POT_DEADZONE ||
+				(motor->enabled == MOTOR_ENABLED && potDifference > POT_DEADZONE/2)) {
+			if (motor->enabled == MOTOR_DISABLED) {
+				HAL_GPIO_WritePin(motor->enablePort, motor->enablePin, GPIO_PIN_RESET);
+				motor->enabled = MOTOR_ENABLED;
+			}
 
-            moveToPositionSmooth(motor, targetStep);
-            motor->lastStablePotValue = potValue;
-        }
-        else if (motor->enabled == MOTOR_ENABLED &&
-                abs(targetStep - motor->lastStepPosition) <= POSITION_TOLERANCE) {
-            HAL_GPIO_WritePin(motor->enablePort, motor->enablePin, GPIO_PIN_SET);
-            motor->enabled = MOTOR_DISABLED;
-        }
+			moveToPositionSmooth(motor, targetStep);
+			motor->lastStablePotValue = potValue;
+		}
+		else if (motor->enabled == MOTOR_ENABLED &&
+				abs(targetStep - motor->lastStepPosition) <= POSITION_TOLERANCE) {
+			HAL_GPIO_WritePin(motor->enablePort, motor->enablePin, GPIO_PIN_SET);
+			motor->enabled = MOTOR_DISABLED;
+		}
 
-        osDelay(10);
-    }
+		osDelay(10);
+	}
 }
 /* USER CODE END 0 */
 
@@ -395,11 +384,12 @@ int main(void)
 	// Start TIM8 for ADC triggering
 	HAL_TIM_Base_Start(&htim8);
 
-	  // Initialize motor states
-	  HAL_GPIO_WritePin(motor1.enablePort, motor1.enablePin, GPIO_PIN_SET);
-	  HAL_GPIO_WritePin(motor2.enablePort, motor2.enablePin, GPIO_PIN_SET);
-	  HAL_GPIO_WritePin(motor3.enablePort, motor3.enablePin, GPIO_PIN_SET);
-	  HAL_GPIO_WritePin(motor4.enablePort, motor4.enablePin, GPIO_PIN_SET);
+	// Initialize motor states
+	HAL_GPIO_WritePin(motor1.enablePort, motor1.enablePin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(motor2.enablePort, motor2.enablePin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(motor3.enablePort, motor3.enablePin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(motor4.enablePort, motor4.enablePin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(motor5.enablePort, motor5.enablePin, GPIO_PIN_SET);
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -434,8 +424,8 @@ int main(void)
   /* creation of Fourth */
   FourthHandle = osThreadNew(FourthMotor, NULL, &Fourth_attributes);
 
-  /* creation of FifthAndSixth */
-  FifthAndSixthHandle = osThreadNew(FifthAndSixthMotor, NULL, &FifthAndSixth_attributes);
+  /* creation of Fifth */
+  FifthHandle = osThreadNew(FifthMotor, NULL, &Fifth_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
 	/* add threads, ... */
@@ -700,8 +690,7 @@ static void MX_GPIO_Init(void)
                           |DIR_Motro1_Pin|ENA_Motor1_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOD, PUL_Motor5_Pin|DIR_Motor5_Pin|ENA_Motor5_Pin|PUL_Motor6_Pin
-                          |PUL_Motor6D14_Pin|PUL_Motor6D15_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOD, PUL_Motor5_Pin|DIR_Motor5_Pin|ENA_Motor5_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOC, PUL_Motor2_Pin|DIR_Motor2_Pin|ENA_Motor2_Pin, GPIO_PIN_RESET);
@@ -722,10 +711,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PUL_Motor5_Pin DIR_Motor5_Pin ENA_Motor5_Pin PUL_Motor6_Pin
-                           PUL_Motor6D14_Pin PUL_Motor6D15_Pin */
-  GPIO_InitStruct.Pin = PUL_Motor5_Pin|DIR_Motor5_Pin|ENA_Motor5_Pin|PUL_Motor6_Pin
-                          |PUL_Motor6D14_Pin|PUL_Motor6D15_Pin;
+  /*Configure GPIO pins : PUL_Motor5_Pin DIR_Motor5_Pin ENA_Motor5_Pin */
+  GPIO_InitStruct.Pin = PUL_Motor5_Pin|DIR_Motor5_Pin|ENA_Motor5_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -757,192 +744,219 @@ static void MX_GPIO_Init(void)
 void FirstMotor(void *argument)
 {
   /* USER CODE BEGIN 5 */
-    // Initialize motor state
-    HAL_GPIO_WritePin(motor1.enablePort, motor1.enablePin, GPIO_PIN_SET);
-    motor1.enabled = MOTOR_DISABLED;
-    motor1.lastStablePotValue = readStablePot(&motor1);
+	// Initialize motor state
+	HAL_GPIO_WritePin(motor1.enablePort, motor1.enablePin, GPIO_PIN_SET);
+	motor1.enabled = MOTOR_DISABLED;
+	motor1.lastStablePotValue = readStablePot(&motor1);
 
-    /* Infinite loop */
-    for(;;)
-    {
-        int potValue = readStablePot(&motor1);
-        int targetStep = (int)((float)potValue / 65535.0f * (StepPerRevolution-1));
+	/* Infinite loop */
+	for(;;)
+	{
+		int potValue = readStablePot(&motor1);
+		int targetStep = (int)((float)potValue / 65535.0f * (StepPerRevolution-1));
 
-        // Only react to significant pot changes with hysteresis
-        int potDifference = abs(potValue - motor1.lastStablePotValue);
+		// Only react to significant pot changes with hysteresis
+		int potDifference = abs(potValue - motor1.lastStablePotValue);
 
-        if(potDifference > POT_DEADZONE ||
-                (motor1.enabled == MOTOR_ENABLED && potDifference > POT_DEADZONE/2)) {
-            if(motor1.enabled == MOTOR_DISABLED) {
-                HAL_GPIO_WritePin(motor1.enablePort, motor1.enablePin, GPIO_PIN_RESET);
-                motor1.enabled = MOTOR_ENABLED;
-            }
+		if(potDifference > POT_DEADZONE ||
+				(motor1.enabled == MOTOR_ENABLED && potDifference > POT_DEADZONE/2)) {
+			if(motor1.enabled == MOTOR_DISABLED) {
+				HAL_GPIO_WritePin(motor1.enablePort, motor1.enablePin, GPIO_PIN_RESET);
+				motor1.enabled = MOTOR_ENABLED;
+			}
 
-            moveToPositionSmooth(&motor1, targetStep);
-            motor1.lastStablePotValue = potValue;
-        }
-        else if(motor1.enabled == MOTOR_ENABLED &&
-                abs(targetStep - motor1.lastStepPosition) <= POSITION_TOLERANCE) {
-            HAL_GPIO_WritePin(motor1.enablePort, motor1.enablePin, GPIO_PIN_SET);
-            motor1.enabled = MOTOR_DISABLED;
-        }
+			moveToPositionSmooth(&motor1, targetStep);
+			motor1.lastStablePotValue = potValue;
+		}
+		else if(motor1.enabled == MOTOR_ENABLED &&
+				abs(targetStep - motor1.lastStepPosition) <= POSITION_TOLERANCE) {
+			HAL_GPIO_WritePin(motor1.enablePort, motor1.enablePin, GPIO_PIN_SET);
+			motor1.enabled = MOTOR_DISABLED;
+		}
 
-        osDelay(10); // Delay using FreeRTOS (10ms delay)
-    }
+		osDelay(10); // Delay using FreeRTOS (10ms delay)
+	}
   /* USER CODE END 5 */
 }
 
 /* USER CODE BEGIN Header_SecondMotor */
 /**
-* @brief Function implementing the Second thread.
-* @param argument: Not used
-* @retval None
-*/
+ * @brief Function implementing the Second thread.
+ * @param argument: Not used
+ * @retval None
+ */
 /* USER CODE END Header_SecondMotor */
 void SecondMotor(void *argument)
 {
   /* USER CODE BEGIN SecondMotor */
-    // Initialize motor state
-    HAL_GPIO_WritePin(motor2.enablePort, motor2.enablePin, GPIO_PIN_SET);
-    motor2.enabled = MOTOR_DISABLED;
-    motor2.lastStablePotValue = readStablePot(&motor2);
+	// Initialize motor state
+	HAL_GPIO_WritePin(motor2.enablePort, motor2.enablePin, GPIO_PIN_SET);
+	motor2.enabled = MOTOR_DISABLED;
+	motor2.lastStablePotValue = readStablePot(&motor2);
 
-    /* Infinite loop */
-    for(;;)
-    {
-        int potValue = readStablePot(&motor2);
-        int targetStep = (int)((float)potValue / 65535.0f * (StepPerRevolution-1));
+	/* Infinite loop */
+	for(;;)
+	{
+		int potValue = readStablePot(&motor2);
+		int targetStep = (int)((float)potValue / 65535.0f * (StepPerRevolution-1));
 
-        // Only react to significant pot changes with hysteresis
-        int potDifference = abs(potValue - motor2.lastStablePotValue);
+		// Only react to significant pot changes with hysteresis
+		int potDifference = abs(potValue - motor2.lastStablePotValue);
 
-        if(potDifference > POT_DEADZONE ||
-                (motor2.enabled == MOTOR_ENABLED && potDifference > POT_DEADZONE/2)) {
-            if(motor2.enabled == MOTOR_DISABLED) {
-                HAL_GPIO_WritePin(motor2.enablePort, motor2.enablePin, GPIO_PIN_RESET);
-                motor2.enabled = MOTOR_ENABLED;
-            }
+		if(potDifference > POT_DEADZONE ||
+				(motor2.enabled == MOTOR_ENABLED && potDifference > POT_DEADZONE/2)) {
+			if(motor2.enabled == MOTOR_DISABLED) {
+				HAL_GPIO_WritePin(motor2.enablePort, motor2.enablePin, GPIO_PIN_RESET);
+				motor2.enabled = MOTOR_ENABLED;
+			}
 
-            moveToPositionSmooth(&motor2, targetStep);
-            motor2.lastStablePotValue = potValue;
-        }
-        else if(motor2.enabled == MOTOR_ENABLED &&
-                abs(targetStep - motor2.lastStepPosition) <= POSITION_TOLERANCE) {
-            HAL_GPIO_WritePin(motor2.enablePort, motor2.enablePin, GPIO_PIN_SET);
-            motor2.enabled = MOTOR_DISABLED;
-        }
+			moveToPositionSmooth(&motor2, targetStep);
+			motor2.lastStablePotValue = potValue;
+		}
+		else if(motor2.enabled == MOTOR_ENABLED &&
+				abs(targetStep - motor2.lastStepPosition) <= POSITION_TOLERANCE) {
+			HAL_GPIO_WritePin(motor2.enablePort, motor2.enablePin, GPIO_PIN_SET);
+			motor2.enabled = MOTOR_DISABLED;
+		}
 
-        osDelay(10); // Delay using FreeRTOS (10ms delay)
-    }
+		osDelay(10); // Delay using FreeRTOS (10ms delay)
+	}
   /* USER CODE END SecondMotor */
 }
 
 /* USER CODE BEGIN Header_ThirdMotor */
 /**
-* @brief Function implementing the Third thread.
-* @param argument: Not used
-* @retval None
-*/
+ * @brief Function implementing the Third thread.
+ * @param argument: Not used
+ * @retval None
+ */
 /* USER CODE END Header_ThirdMotor */
 void ThirdMotor(void *argument)
 {
   /* USER CODE BEGIN ThirdMotor */
-    // Initialize motor state
-    HAL_GPIO_WritePin(motor3.enablePort, motor3.enablePin, GPIO_PIN_SET);
-    motor3.enabled = MOTOR_DISABLED;
-    motor3.lastStablePotValue = readStablePot(&motor3);
+	// Initialize motor state
+	HAL_GPIO_WritePin(motor3.enablePort, motor3.enablePin, GPIO_PIN_SET);
+	motor3.enabled = MOTOR_DISABLED;
+	motor3.lastStablePotValue = readStablePot(&motor3);
 
-    /* Infinite loop */
-    for(;;)
-    {
-        int potValue = readStablePot(&motor3);
-        int targetStep = (int)((float)potValue / 65535.0f * (StepPerRevolution-1));
+	/* Infinite loop */
+	for(;;)
+	{
+		int potValue = readStablePot(&motor3);
+		int targetStep = (int)((float)potValue / 65535.0f * (StepPerRevolution-1));
 
-        // Only react to significant pot changes with hysteresis
-        int potDifference = abs(potValue - motor3.lastStablePotValue);
+		// Only react to significant pot changes with hysteresis
+		int potDifference = abs(potValue - motor3.lastStablePotValue);
 
-        if(potDifference > POT_DEADZONE ||
-                (motor3.enabled == MOTOR_ENABLED && potDifference > POT_DEADZONE/2)) {
-            if(motor3.enabled == MOTOR_DISABLED) {
-                HAL_GPIO_WritePin(motor3.enablePort, motor3.enablePin, GPIO_PIN_RESET);
-                motor3.enabled = MOTOR_ENABLED;
-            }
+		if(potDifference > POT_DEADZONE ||
+				(motor3.enabled == MOTOR_ENABLED && potDifference > POT_DEADZONE/2)) {
+			if(motor3.enabled == MOTOR_DISABLED) {
+				HAL_GPIO_WritePin(motor3.enablePort, motor3.enablePin, GPIO_PIN_RESET);
+				motor3.enabled = MOTOR_ENABLED;
+			}
 
-            moveToPositionSmooth(&motor3, targetStep);
-            motor3.lastStablePotValue = potValue;
-        }
-        else if(motor3.enabled == MOTOR_ENABLED &&
-                abs(targetStep - motor3.lastStepPosition) <= POSITION_TOLERANCE) {
-            HAL_GPIO_WritePin(motor3.enablePort, motor3.enablePin, GPIO_PIN_SET);
-            motor3.enabled = MOTOR_DISABLED;
-        }
+			moveToPositionSmooth(&motor3, targetStep);
+			motor3.lastStablePotValue = potValue;
+		}
+		else if(motor3.enabled == MOTOR_ENABLED &&
+				abs(targetStep - motor3.lastStepPosition) <= POSITION_TOLERANCE) {
+			HAL_GPIO_WritePin(motor3.enablePort, motor3.enablePin, GPIO_PIN_SET);
+			motor3.enabled = MOTOR_DISABLED;
+		}
 
-        osDelay(10); // Delay using FreeRTOS (10ms delay)
-    }
+		osDelay(10); // Delay using FreeRTOS (10ms delay)
+	}
   /* USER CODE END ThirdMotor */
 }
 
 /* USER CODE BEGIN Header_FourthMotor */
 /**
-* @brief Function implementing the Fourth thread.
-* @param argument: Not used
-* @retval None
-*/
+ * @brief Function implementing the Fourth thread.
+ * @param argument: Not used
+ * @retval None
+ */
 /* USER CODE END Header_FourthMotor */
 void FourthMotor(void *argument)
 {
   /* USER CODE BEGIN FourthMotor */
-    // Initialize motor state
-    HAL_GPIO_WritePin(motor4.enablePort, motor4.enablePin, GPIO_PIN_SET);
-    motor4.enabled = MOTOR_DISABLED;
-    motor4.lastStablePotValue = readStablePot(&motor4);
+	// Initialize motor state
+	HAL_GPIO_WritePin(motor4.enablePort, motor4.enablePin, GPIO_PIN_SET);
+	motor4.enabled = MOTOR_DISABLED;
+	motor4.lastStablePotValue = readStablePot(&motor4);
 
-    /* Infinite loop */
-    for(;;)
-    {
-        int potValue = readStablePot(&motor4);
-        int targetStep = (int)((float)potValue / 65535.0f * (StepPerRevolution-1));
+	/* Infinite loop */
+	for(;;)
+	{
+		int potValue = readStablePot(&motor4);
+		int targetStep = (int)((float)potValue / 65535.0f * (StepPerRevolution-1));
 
-        // Only react to significant pot changes with hysteresis
-        int potDifference = abs(potValue - motor4.lastStablePotValue);
+		// Only react to significant pot changes with hysteresis
+		int potDifference = abs(potValue - motor4.lastStablePotValue);
 
-        if(potDifference > POT_DEADZONE ||
-                (motor4.enabled == MOTOR_ENABLED && potDifference > POT_DEADZONE/2)) {
-            if(motor4.enabled == MOTOR_DISABLED) {
-                HAL_GPIO_WritePin(motor4.enablePort, motor4.enablePin, GPIO_PIN_RESET);
-                motor4.enabled = MOTOR_ENABLED;
-            }
+		if(potDifference > POT_DEADZONE ||
+				(motor4.enabled == MOTOR_ENABLED && potDifference > POT_DEADZONE/2)) {
+			if(motor4.enabled == MOTOR_DISABLED) {
+				HAL_GPIO_WritePin(motor4.enablePort, motor4.enablePin, GPIO_PIN_RESET);
+				motor4.enabled = MOTOR_ENABLED;
+			}
 
-            moveToPositionSmooth(&motor4, targetStep);
-            motor4.lastStablePotValue = potValue;
-        }
-        else if(motor4.enabled == MOTOR_ENABLED &&
-                abs(targetStep - motor4.lastStepPosition) <= POSITION_TOLERANCE) {
-            HAL_GPIO_WritePin(motor4.enablePort, motor4.enablePin, GPIO_PIN_SET);
-            motor4.enabled = MOTOR_DISABLED;
-        }
+			moveToPositionSmooth(&motor4, targetStep);
+			motor4.lastStablePotValue = potValue;
+		}
+		else if(motor4.enabled == MOTOR_ENABLED &&
+				abs(targetStep - motor4.lastStepPosition) <= POSITION_TOLERANCE) {
+			HAL_GPIO_WritePin(motor4.enablePort, motor4.enablePin, GPIO_PIN_SET);
+			motor4.enabled = MOTOR_DISABLED;
+		}
 
-        osDelay(10); // Delay using FreeRTOS (10ms delay)
-    }
+		osDelay(10); // Delay using FreeRTOS (10ms delay)
+	}
   /* USER CODE END FourthMotor */
 }
 
-/* USER CODE BEGIN Header_FifthAndSixthMotor */
+/* USER CODE BEGIN Header_FifthMotor */
 /**
-* @brief Function implementing the FifthAndSixth thread.
+* @brief Function implementing the Fifth thread.
 * @param argument: Not used
 * @retval None
 */
-/* USER CODE END Header_FifthAndSixthMotor */
-void FifthAndSixthMotor(void *argument)
+/* USER CODE END Header_FifthMotor */
+void FifthMotor(void *argument)
 {
-  /* USER CODE BEGIN FifthAndSixthMotor */
-  /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
-  /* USER CODE END FifthAndSixthMotor */
+  /* USER CODE BEGIN FifthMotor */
+	// Initialize motor state
+	HAL_GPIO_WritePin(motor5.enablePort, motor5.enablePin, GPIO_PIN_SET);
+	motor5.enabled = MOTOR_DISABLED;
+	motor5.lastStablePotValue = readStablePot(&motor5);
+
+	/* Infinite loop */
+	for(;;)
+	{
+		int potValue = readStablePot(&motor5);
+		int targetStep = (int)((float)potValue / 65535.0f * (StepPerRevolution-1));
+
+		// Only react to significant pot changes with hysteresis
+		int potDifference = abs(potValue - motor5.lastStablePotValue);
+
+		if(potDifference > POT_DEADZONE ||
+				(motor5.enabled == MOTOR_ENABLED && potDifference > POT_DEADZONE/2)) {
+			if(motor5.enabled == MOTOR_DISABLED) {
+				HAL_GPIO_WritePin(motor5.enablePort, motor5.enablePin, GPIO_PIN_RESET);
+				motor5.enabled = MOTOR_ENABLED;
+			}
+
+			moveToPositionSmooth(&motor5, targetStep);
+			motor5.lastStablePotValue = potValue;
+		}
+		else if(motor5.enabled == MOTOR_ENABLED &&
+				abs(targetStep - motor5.lastStepPosition) <= POSITION_TOLERANCE) {
+			HAL_GPIO_WritePin(motor5.enablePort, motor5.enablePin, GPIO_PIN_SET);
+			motor5.enabled = MOTOR_DISABLED;
+		}
+
+		osDelay(10); // Delay using FreeRTOS (10ms delay)
+	}
+  /* USER CODE END FifthMotor */
 }
 
  /* MPU Configuration */
