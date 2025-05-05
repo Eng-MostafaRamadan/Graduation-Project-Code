@@ -328,39 +328,6 @@ void HAL_Delay_us(uint32_t microseconds) {
 		// Wait
 	}
 }
-void MotorThread(void* argument) {
-	MotorController* motor = (MotorController*)argument;
-
-	// Initialize motor state
-	HAL_GPIO_WritePin(motor->enablePort, motor->enablePin, GPIO_PIN_SET);
-	motor->enabled = MOTOR_DISABLED;
-	motor->lastStablePotValue = readStablePot(motor);
-
-	for (;;) {
-		int potValue = readStablePot(motor);
-		int targetStep = (int)((float)potValue / 65535.0f * (StepPerRevolution-1));
-
-		int potDifference = abs(potValue - motor->lastStablePotValue);
-
-		if (potDifference > POT_DEADZONE ||
-				(motor->enabled == MOTOR_ENABLED && potDifference > POT_DEADZONE/2)) {
-			if (motor->enabled == MOTOR_DISABLED) {
-				HAL_GPIO_WritePin(motor->enablePort, motor->enablePin, GPIO_PIN_RESET);
-				motor->enabled = MOTOR_ENABLED;
-			}
-
-			moveToPositionSmooth(motor, targetStep);
-			motor->lastStablePotValue = potValue;
-		}
-		else if (motor->enabled == MOTOR_ENABLED &&
-				abs(targetStep - motor->lastStepPosition) <= POSITION_TOLERANCE) {
-			HAL_GPIO_WritePin(motor->enablePort, motor->enablePin, GPIO_PIN_SET);
-			motor->enabled = MOTOR_DISABLED;
-		}
-
-		osDelay(10);
-	}
-}
 /* USER CODE END 0 */
 
 /**
