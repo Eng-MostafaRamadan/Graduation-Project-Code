@@ -377,6 +377,7 @@ int main(void)
 	HAL_GPIO_WritePin(motor3.enablePort, motor3.enablePin, GPIO_PIN_SET);
 	HAL_GPIO_WritePin(motor4.enablePort, motor4.enablePin, GPIO_PIN_SET);
 	HAL_GPIO_WritePin(motor5.enablePort, motor5.enablePin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(motor6.enablePort, motor6.enablePin, GPIO_PIN_SET);
   /* USER CODE END 2 */
 
   /* Init scheduler */
