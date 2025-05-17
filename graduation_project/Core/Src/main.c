@@ -133,7 +133,7 @@ MotorController motor1 = {
 		.lastStablePotValue = 0,
 		.lastMovementDirection = 0,
 		.currentSpeed = BASE_PULSE_WIDTH,
-		.rotationRange = 180.0f
+		.rotationRange = 720.0f
 };
 
 MotorController motor2 = {
@@ -145,7 +145,8 @@ MotorController motor2 = {
 		.enabled = MOTOR_DISABLED,
 		.lastStablePotValue = 0,
 		.lastMovementDirection = 0,
-		.currentSpeed = BASE_PULSE_WIDTH
+		.currentSpeed = BASE_PULSE_WIDTH,
+		.rotationRange = 720.0f
 };
 
 MotorController motor3 = {
@@ -157,7 +158,8 @@ MotorController motor3 = {
 		.enabled = MOTOR_DISABLED,
 		.lastStablePotValue = 0,
 		.lastMovementDirection = 0,
-		.currentSpeed = BASE_PULSE_WIDTH
+		.currentSpeed = BASE_PULSE_WIDTH,
+		.rotationRange = 720.0f
 };
 
 MotorController motor4 = {
@@ -169,7 +171,8 @@ MotorController motor4 = {
 		.enabled = MOTOR_DISABLED,
 		.lastStablePotValue = 0,
 		.lastMovementDirection = 0,
-		.currentSpeed = BASE_PULSE_WIDTH
+		.currentSpeed = BASE_PULSE_WIDTH,
+		.rotationRange = 720.0f
 };
 
 MotorController motor5 = {
@@ -181,7 +184,8 @@ MotorController motor5 = {
 		.enabled = MOTOR_DISABLED,
 		.lastStablePotValue = 0,
 		.lastMovementDirection = 0,
-		.currentSpeed = BASE_PULSE_WIDTH
+		.currentSpeed = BASE_PULSE_WIDTH,
+		.rotationRange = 720.0f
 };
 
 MotorController motor6 = {
@@ -193,7 +197,8 @@ MotorController motor6 = {
 		.enabled = MOTOR_DISABLED,
 		.lastStablePotValue = 0,
 		.lastMovementDirection = 0,
-		.currentSpeed = BASE_PULSE_WIDTH
+		.currentSpeed = BASE_PULSE_WIDTH,
+		.rotationRange = 720.0f
 };
 /* USER CODE END PV */
 
@@ -804,37 +809,50 @@ void FirstMotor(void *argument)
 /* USER CODE END Header_SecondMotor */
 void SecondMotor(void *argument)
 {
-  /* USER CODE BEGIN SecondMotor */
-	// Initialize motor state
-	HAL_GPIO_WritePin(motor2.enablePort, motor2.enablePin, GPIO_PIN_SET);
-	motor2.enabled = MOTOR_DISABLED;
-	motor2.lastStablePotValue = readStablePot(&motor2);
+    HAL_GPIO_WritePin(motor2.enablePort, motor2.enablePin, GPIO_PIN_SET);
+    motor2.enabled = MOTOR_DISABLED;
+    motor2.lastStablePotValue = readStablePot(&motor2);
 
-	/* Infinite loop */
-	for(;;)
-	{
-		int potValue = readStablePot(&motor2);
-		int targetStep = (int)((float)potValue / 65535.0f * (StepPerRevolution-1));
+    for(;;) {
+        int potValue = readStablePot(&motor2);
+        int potDifference = abs(potValue - motor2.lastStablePotValue);
 
-		// Only react to significant pot changes with hysteresis
-		int potDifference = abs(potValue - motor2.lastStablePotValue);
+        if(potDifference > POT_DEADZONE ||
+                (motor2.enabled == MOTOR_ENABLED && potDifference > POT_DEADZONE/2)) {
+            if(motor2.enabled == MOTOR_DISABLED) {
+                HAL_GPIO_WritePin(motor2.enablePort, motor2.enablePin, GPIO_PIN_RESET);
+                motor2.enabled = MOTOR_ENABLED;
+            }
 
-		if(potDifference > POT_DEADZONE ||
-				(motor2.enabled == MOTOR_ENABLED && potDifference > POT_DEADZONE/2)) {
-			if(motor2.enabled == MOTOR_DISABLED) {
-				HAL_GPIO_WritePin(motor2.enablePort, motor2.enablePin, GPIO_PIN_RESET);
-				motor2.enabled = MOTOR_ENABLED;
-			}
+            // Calculate target steps based on full rotation range
+            float targetAngle = (float)potValue / 65535.0f * motor2.rotationRange;
+            int targetSteps = (int)(targetAngle/360.0f * StepPerRevolution);
 
-			moveToPositionSmooth(&motor2, targetStep);
-			motor2.lastStablePotValue = potValue;
-		}
-		else if(motor2.enabled == MOTOR_ENABLED &&
-				abs(targetStep - motor2.lastStepPosition) <= POSITION_TOLERANCE) {
-			HAL_GPIO_WritePin(motor2.enablePort, motor2.enablePin, GPIO_PIN_SET);
-			motor2.enabled = MOTOR_DISABLED;
-		}
+            // Handle wrap-around for multi-revolution ranges
+            int maxRevolutions = (int)(motor2.rotationRange / 360.0f);
 
+            // Check if we need to wrap around (e.g., from 1080° back to 0°)
+            if (potValue < 1000 && motor2.lastStablePotValue > 64535) {
+                // Moving from high to low (wrap around forward)
+                targetSteps = (maxRevolutions * StepPerRevolution) + (int)((float)potValue / 65535.0f * StepPerRevolution);
+            } else if (potValue > 64535 && motor2.lastStablePotValue < 1000) {
+                // Moving from low to high (wrap around backward)
+                targetSteps = (int)((float)potValue / 65535.0f * StepPerRevolution) - StepPerRevolution;
+            }
+
+            moveToPositionSmooth(&motor2, targetSteps);
+            motor2.lastStablePotValue = potValue;
+        }
+        else if(motor2.enabled == MOTOR_ENABLED) {
+            // Compare absolute step positions
+            float targetAngle = (float)motor2.lastStablePotValue / 65535.0f * motor2.rotationRange;
+            int targetSteps = (int)(targetAngle/360.0f * StepPerRevolution);
+
+            if(abs(motor2.totalSteps - targetSteps) <= POSITION_TOLERANCE) {
+                HAL_GPIO_WritePin(motor2.enablePort, motor2.enablePin, GPIO_PIN_SET);
+                motor2.enabled = MOTOR_DISABLED;
+            }
+        }
 		osDelay(10); // Delay using FreeRTOS (10ms delay)
 	}
   /* USER CODE END SecondMotor */
