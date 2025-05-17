@@ -8,10 +8,10 @@
 ../Core/Src/main.c:675:13:MX_GPIO_Init	56	static
 ../Core/Src/main.c:752:6:FirstMotor	48	static
 ../Core/Src/main.c:810:6:SecondMotor	48	static
-../Core/Src/main.c:868:6:ThirdMotor	32	static
-../Core/Src/main.c:913:6:FourthMotor	32	static
-../Core/Src/main.c:958:6:FifthMotor	32	static
-../Core/Src/main.c:1003:6:SixthMotor	32	static
-../Core/Src/main.c:1043:6:MPU_Config	24	static
-../Core/Src/main.c:1078:6:HAL_TIM_PeriodElapsedCallback	16	static
-../Core/Src/main.c:1096:6:Error_Handler	4	static,ignoring_inline_asm
+../Core/Src/main.c:869:6:ThirdMotor	48	static
+../Core/Src/main.c:928:6:FourthMotor	48	static
+../Core/Src/main.c:987:6:FifthMotor	48	static
+../Core/Src/main.c:1046:6:SixthMotor	48	static
+../Core/Src/main.c:1100:6:MPU_Config	24	static
+../Core/Src/main.c:1135:6:HAL_TIM_PeriodElapsedCallback	16	static
+../Core/Src/main.c:1153:6:Error_Handler	4	static,ignoring_inline_asm

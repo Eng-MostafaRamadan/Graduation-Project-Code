@@ -809,6 +809,7 @@ void FirstMotor(void *argument)
 /* USER CODE END Header_SecondMotor */
 void SecondMotor(void *argument)
 {
+	/* USER CODE BEGIN SecondMotor */
     HAL_GPIO_WritePin(motor2.enablePort, motor2.enablePin, GPIO_PIN_SET);
     motor2.enabled = MOTOR_DISABLED;
     motor2.lastStablePotValue = readStablePot(&motor2);
@@ -868,36 +869,50 @@ void SecondMotor(void *argument)
 void ThirdMotor(void *argument)
 {
   /* USER CODE BEGIN ThirdMotor */
-	// Initialize motor state
-	HAL_GPIO_WritePin(motor3.enablePort, motor3.enablePin, GPIO_PIN_SET);
-	motor3.enabled = MOTOR_DISABLED;
-	motor3.lastStablePotValue = readStablePot(&motor3);
+    HAL_GPIO_WritePin(motor3.enablePort, motor3.enablePin, GPIO_PIN_SET);
+    motor3.enabled = MOTOR_DISABLED;
+    motor3.lastStablePotValue = readStablePot(&motor3);
 
-	/* Infinite loop */
-	for(;;)
-	{
-		int potValue = readStablePot(&motor3);
-		int targetStep = (int)((float)potValue / 65535.0f * (StepPerRevolution-1));
+    for(;;) {
+        int potValue = readStablePot(&motor3);
+        int potDifference = abs(potValue - motor3.lastStablePotValue);
 
-		// Only react to significant pot changes with hysteresis
-		int potDifference = abs(potValue - motor3.lastStablePotValue);
+        if(potDifference > POT_DEADZONE ||
+                (motor3.enabled == MOTOR_ENABLED && potDifference > POT_DEADZONE/2)) {
+            if(motor3.enabled == MOTOR_DISABLED) {
+                HAL_GPIO_WritePin(motor3.enablePort, motor3.enablePin, GPIO_PIN_RESET);
+                motor3.enabled = MOTOR_ENABLED;
+            }
 
-		if(potDifference > POT_DEADZONE ||
-				(motor3.enabled == MOTOR_ENABLED && potDifference > POT_DEADZONE/2)) {
-			if(motor3.enabled == MOTOR_DISABLED) {
-				HAL_GPIO_WritePin(motor3.enablePort, motor3.enablePin, GPIO_PIN_RESET);
-				motor3.enabled = MOTOR_ENABLED;
-			}
+            // Calculate target steps based on full rotation range
+            float targetAngle = (float)potValue / 65535.0f * motor3.rotationRange;
+            int targetSteps = (int)(targetAngle/360.0f * StepPerRevolution);
 
-			moveToPositionSmooth(&motor3, targetStep);
-			motor3.lastStablePotValue = potValue;
-		}
-		else if(motor3.enabled == MOTOR_ENABLED &&
-				abs(targetStep - motor3.lastStepPosition) <= POSITION_TOLERANCE) {
-			HAL_GPIO_WritePin(motor3.enablePort, motor3.enablePin, GPIO_PIN_SET);
-			motor3.enabled = MOTOR_DISABLED;
-		}
+            // Handle wrap-around for multi-revolution ranges
+            int maxRevolutions = (int)(motor3.rotationRange / 360.0f);
 
+            // Check if we need to wrap around (e.g., from 1080° back to 0°)
+            if (potValue < 1000 && motor3.lastStablePotValue > 64535) {
+                // Moving from high to low (wrap around forward)
+                targetSteps = (maxRevolutions * StepPerRevolution) + (int)((float)potValue / 65535.0f * StepPerRevolution);
+            } else if (potValue > 64535 && motor3.lastStablePotValue < 1000) {
+                // Moving from low to high (wrap around backward)
+                targetSteps = (int)((float)potValue / 65535.0f * StepPerRevolution) - StepPerRevolution;
+            }
+
+            moveToPositionSmooth(&motor3, targetSteps);
+            motor3.lastStablePotValue = potValue;
+        }
+        else if(motor3.enabled == MOTOR_ENABLED) {
+            // Compare absolute step positions
+            float targetAngle = (float)motor3.lastStablePotValue / 65535.0f * motor3.rotationRange;
+            int targetSteps = (int)(targetAngle/360.0f * StepPerRevolution);
+
+            if(abs(motor3.totalSteps - targetSteps) <= POSITION_TOLERANCE) {
+                HAL_GPIO_WritePin(motor3.enablePort, motor3.enablePin, GPIO_PIN_SET);
+                motor3.enabled = MOTOR_DISABLED;
+            }
+        }
 		osDelay(10); // Delay using FreeRTOS (10ms delay)
 	}
   /* USER CODE END ThirdMotor */
@@ -913,36 +928,50 @@ void ThirdMotor(void *argument)
 void FourthMotor(void *argument)
 {
   /* USER CODE BEGIN FourthMotor */
-	// Initialize motor state
-	HAL_GPIO_WritePin(motor4.enablePort, motor4.enablePin, GPIO_PIN_SET);
-	motor4.enabled = MOTOR_DISABLED;
-	motor4.lastStablePotValue = readStablePot(&motor4);
+    HAL_GPIO_WritePin(motor4.enablePort, motor4.enablePin, GPIO_PIN_SET);
+    motor4.enabled = MOTOR_DISABLED;
+    motor4.lastStablePotValue = readStablePot(&motor4);
 
-	/* Infinite loop */
-	for(;;)
-	{
-		int potValue = readStablePot(&motor4);
-		int targetStep = (int)((float)potValue / 65535.0f * (StepPerRevolution-1));
+    for(;;) {
+        int potValue = readStablePot(&motor4);
+        int potDifference = abs(potValue - motor4.lastStablePotValue);
 
-		// Only react to significant pot changes with hysteresis
-		int potDifference = abs(potValue - motor4.lastStablePotValue);
+        if(potDifference > POT_DEADZONE ||
+                (motor4.enabled == MOTOR_ENABLED && potDifference > POT_DEADZONE/2)) {
+            if(motor4.enabled == MOTOR_DISABLED) {
+                HAL_GPIO_WritePin(motor4.enablePort, motor4.enablePin, GPIO_PIN_RESET);
+                motor4.enabled = MOTOR_ENABLED;
+            }
 
-		if(potDifference > POT_DEADZONE ||
-				(motor4.enabled == MOTOR_ENABLED && potDifference > POT_DEADZONE/2)) {
-			if(motor4.enabled == MOTOR_DISABLED) {
-				HAL_GPIO_WritePin(motor4.enablePort, motor4.enablePin, GPIO_PIN_RESET);
-				motor4.enabled = MOTOR_ENABLED;
-			}
+            // Calculate target steps based on full rotation range
+            float targetAngle = (float)potValue / 65535.0f * motor4.rotationRange;
+            int targetSteps = (int)(targetAngle/360.0f * StepPerRevolution);
 
-			moveToPositionSmooth(&motor4, targetStep);
-			motor4.lastStablePotValue = potValue;
-		}
-		else if(motor4.enabled == MOTOR_ENABLED &&
-				abs(targetStep - motor4.lastStepPosition) <= POSITION_TOLERANCE) {
-			HAL_GPIO_WritePin(motor4.enablePort, motor4.enablePin, GPIO_PIN_SET);
-			motor4.enabled = MOTOR_DISABLED;
-		}
+            // Handle wrap-around for multi-revolution ranges
+            int maxRevolutions = (int)(motor4.rotationRange / 360.0f);
 
+            // Check if we need to wrap around (e.g., from 1080° back to 0°)
+            if (potValue < 1000 && motor4.lastStablePotValue > 64535) {
+                // Moving from high to low (wrap around forward)
+                targetSteps = (maxRevolutions * StepPerRevolution) + (int)((float)potValue / 65535.0f * StepPerRevolution);
+            } else if (potValue > 64535 && motor4.lastStablePotValue < 1000) {
+                // Moving from low to high (wrap around backward)
+                targetSteps = (int)((float)potValue / 65535.0f * StepPerRevolution) - StepPerRevolution;
+            }
+
+            moveToPositionSmooth(&motor4, targetSteps);
+            motor4.lastStablePotValue = potValue;
+        }
+        else if(motor4.enabled == MOTOR_ENABLED) {
+            // Compare absolute step positions
+            float targetAngle = (float)motor4.lastStablePotValue / 65535.0f * motor4.rotationRange;
+            int targetSteps = (int)(targetAngle/360.0f * StepPerRevolution);
+
+            if(abs(motor4.totalSteps - targetSteps) <= POSITION_TOLERANCE) {
+                HAL_GPIO_WritePin(motor4.enablePort, motor4.enablePin, GPIO_PIN_SET);
+                motor4.enabled = MOTOR_DISABLED;
+            }
+        }
 		osDelay(10); // Delay using FreeRTOS (10ms delay)
 	}
   /* USER CODE END FourthMotor */
@@ -958,36 +987,50 @@ void FourthMotor(void *argument)
 void FifthMotor(void *argument)
 {
   /* USER CODE BEGIN FifthMotor */
-	// Initialize motor state
-	HAL_GPIO_WritePin(motor5.enablePort, motor5.enablePin, GPIO_PIN_SET);
-	motor5.enabled = MOTOR_DISABLED;
-	motor5.lastStablePotValue = readStablePot(&motor5);
+    HAL_GPIO_WritePin(motor5.enablePort, motor5.enablePin, GPIO_PIN_SET);
+    motor5.enabled = MOTOR_DISABLED;
+    motor5.lastStablePotValue = readStablePot(&motor5);
 
-	/* Infinite loop */
-	for(;;)
-	{
-		int potValue = readStablePot(&motor5);
-		int targetStep = (int)((float)potValue / 65535.0f * (StepPerRevolution-1));
+    for(;;) {
+        int potValue = readStablePot(&motor5);
+        int potDifference = abs(potValue - motor5.lastStablePotValue);
 
-		// Only react to significant pot changes with hysteresis
-		int potDifference = abs(potValue - motor5.lastStablePotValue);
+        if(potDifference > POT_DEADZONE ||
+                (motor5.enabled == MOTOR_ENABLED && potDifference > POT_DEADZONE/2)) {
+            if(motor5.enabled == MOTOR_DISABLED) {
+                HAL_GPIO_WritePin(motor5.enablePort, motor5.enablePin, GPIO_PIN_RESET);
+                motor5.enabled = MOTOR_ENABLED;
+            }
 
-		if(potDifference > POT_DEADZONE ||
-				(motor5.enabled == MOTOR_ENABLED && potDifference > POT_DEADZONE/2)) {
-			if(motor5.enabled == MOTOR_DISABLED) {
-				HAL_GPIO_WritePin(motor5.enablePort, motor5.enablePin, GPIO_PIN_RESET);
-				motor5.enabled = MOTOR_ENABLED;
-			}
+            // Calculate target steps based on full rotation range
+            float targetAngle = (float)potValue / 65535.0f * motor5.rotationRange;
+            int targetSteps = (int)(targetAngle/360.0f * StepPerRevolution);
 
-			moveToPositionSmooth(&motor5, targetStep);
-			motor5.lastStablePotValue = potValue;
-		}
-		else if(motor5.enabled == MOTOR_ENABLED &&
-				abs(targetStep - motor5.lastStepPosition) <= POSITION_TOLERANCE) {
-			HAL_GPIO_WritePin(motor5.enablePort, motor5.enablePin, GPIO_PIN_SET);
-			motor5.enabled = MOTOR_DISABLED;
-		}
+            // Handle wrap-around for multi-revolution ranges
+            int maxRevolutions = (int)(motor5.rotationRange / 360.0f);
 
+            // Check if we need to wrap around (e.g., from 1080° back to 0°)
+            if (potValue < 1000 && motor5.lastStablePotValue > 64535) {
+                // Moving from high to low (wrap around forward)
+                targetSteps = (maxRevolutions * StepPerRevolution) + (int)((float)potValue / 65535.0f * StepPerRevolution);
+            } else if (potValue > 64535 && motor5.lastStablePotValue < 1000) {
+                // Moving from low to high (wrap around backward)
+                targetSteps = (int)((float)potValue / 65535.0f * StepPerRevolution) - StepPerRevolution;
+            }
+
+            moveToPositionSmooth(&motor5, targetSteps);
+            motor5.lastStablePotValue = potValue;
+        }
+        else if(motor5.enabled == MOTOR_ENABLED) {
+            // Compare absolute step positions
+            float targetAngle = (float)motor5.lastStablePotValue / 65535.0f * motor5.rotationRange;
+            int targetSteps = (int)(targetAngle/360.0f * StepPerRevolution);
+
+            if(abs(motor5.totalSteps - targetSteps) <= POSITION_TOLERANCE) {
+                HAL_GPIO_WritePin(motor5.enablePort, motor5.enablePin, GPIO_PIN_SET);
+                motor5.enabled = MOTOR_DISABLED;
+            }
+        }
 		osDelay(10); // Delay using FreeRTOS (10ms delay)
 	}
   /* USER CODE END FifthMotor */
@@ -1003,36 +1046,50 @@ void FifthMotor(void *argument)
 void SixthMotor(void *argument)
 {
   /* USER CODE BEGIN SixthMotor */
-	// Initialize motor state
-	HAL_GPIO_WritePin(motor6.enablePort, motor6.enablePin, GPIO_PIN_SET);
-	motor6.enabled = MOTOR_DISABLED;
-	motor6.lastStablePotValue = readStablePot(&motor5);
+    HAL_GPIO_WritePin(motor6.enablePort, motor6.enablePin, GPIO_PIN_SET);
+    motor6.enabled = MOTOR_DISABLED;
+    motor6.lastStablePotValue = readStablePot(&motor5);
 
-	/* Infinite loop */
-	for(;;)
-	{
-		int potValue = readStablePot(&motor5);
-		int targetStep = (int)((float)potValue / 65535.0f * (StepPerRevolution-1));
+    for(;;) {
+        int potValue = readStablePot(&motor5);
+        int potDifference = abs(potValue - motor6.lastStablePotValue);
 
-		// Only react to significant pot changes with hysteresis
-		int potDifference = abs(potValue - motor6.lastStablePotValue);
+        if(potDifference > POT_DEADZONE ||
+                (motor6.enabled == MOTOR_ENABLED && potDifference > POT_DEADZONE/2)) {
+            if(motor6.enabled == MOTOR_DISABLED) {
+                HAL_GPIO_WritePin(motor6.enablePort, motor6.enablePin, GPIO_PIN_RESET);
+                motor6.enabled = MOTOR_ENABLED;
+            }
 
-		if(potDifference > POT_DEADZONE ||
-				(motor6.enabled == MOTOR_ENABLED && potDifference > POT_DEADZONE/2)) {
-			if(motor6.enabled == MOTOR_DISABLED) {
-				HAL_GPIO_WritePin(motor6.enablePort, motor6.enablePin, GPIO_PIN_RESET);
-				motor6.enabled = MOTOR_ENABLED;
-			}
+            // Calculate target steps based on full rotation range
+            float targetAngle = (float)potValue / 65535.0f * motor6.rotationRange;
+            int targetSteps = (int)(targetAngle/360.0f * StepPerRevolution);
 
-			moveToPositionSmooth(&motor6, targetStep);
-			motor6.lastStablePotValue = potValue;
-		}
-		else if(motor6.enabled == MOTOR_ENABLED &&
-				abs(targetStep - motor6.lastStepPosition) <= POSITION_TOLERANCE) {
-			HAL_GPIO_WritePin(motor5.enablePort, motor6.enablePin, GPIO_PIN_SET);
-			motor6.enabled = MOTOR_DISABLED;
-		}
+            // Handle wrap-around for multi-revolution ranges
+            int maxRevolutions = (int)(motor6.rotationRange / 360.0f);
 
+            // Check if we need to wrap around (e.g., from 1080° back to 0°)
+            if (potValue < 1000 && motor6.lastStablePotValue > 64535) {
+                // Moving from high to low (wrap around forward)
+                targetSteps = (maxRevolutions * StepPerRevolution) + (int)((float)potValue / 65535.0f * StepPerRevolution);
+            } else if (potValue > 64535 && motor6.lastStablePotValue < 1000) {
+                // Moving from low to high (wrap around backward)
+                targetSteps = (int)((float)potValue / 65535.0f * StepPerRevolution) - StepPerRevolution;
+            }
+
+            moveToPositionSmooth(&motor6, targetSteps);
+            motor6.lastStablePotValue = potValue;
+        }
+        else if(motor6.enabled == MOTOR_ENABLED) {
+            // Compare absolute step positions
+            float targetAngle = (float)motor6.lastStablePotValue / 65535.0f * motor6.rotationRange;
+            int targetSteps = (int)(targetAngle/360.0f * StepPerRevolution);
+
+            if(abs(motor6.totalSteps - targetSteps) <= POSITION_TOLERANCE) {
+                HAL_GPIO_WritePin(motor6.enablePort, motor6.enablePin, GPIO_PIN_SET);
+                motor6.enabled = MOTOR_DISABLED;
+            }
+        }
 		osDelay(10); // Delay using FreeRTOS (10ms delay)
 	}
   /* USER CODE END SixthMotor */

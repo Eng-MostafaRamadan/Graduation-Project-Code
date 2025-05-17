@@ -8,10 +8,10 @@
 ../Core/Src/main.c:675:13:MX_GPIO_Init	1
 ../Core/Src/main.c:752:6:FirstMotor	12
 ../Core/Src/main.c:810:6:SecondMotor	12
-../Core/Src/main.c:868:6:ThirdMotor	8
-../Core/Src/main.c:913:6:FourthMotor	8
-../Core/Src/main.c:958:6:FifthMotor	8
-../Core/Src/main.c:1003:6:SixthMotor	8
-../Core/Src/main.c:1043:6:MPU_Config	1
-../Core/Src/main.c:1078:6:HAL_TIM_PeriodElapsedCallback	2
-../Core/Src/main.c:1096:6:Error_Handler	1
+../Core/Src/main.c:869:6:ThirdMotor	12
+../Core/Src/main.c:928:6:FourthMotor	12
+../Core/Src/main.c:987:6:FifthMotor	12
+../Core/Src/main.c:1046:6:SixthMotor	12
+../Core/Src/main.c:1100:6:MPU_Config	1
+../Core/Src/main.c:1135:6:HAL_TIM_PeriodElapsedCallback	2
+../Core/Src/main.c:1153:6:Error_Handler	1
