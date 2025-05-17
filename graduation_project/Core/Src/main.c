@@ -36,26 +36,28 @@ typedef enum {
 } MotorState;
 
 typedef struct {
-	GPIO_TypeDef* enablePort;
-	uint16_t enablePin;
-	GPIO_TypeDef* directionPort;
-	uint16_t directionPin;
-	GPIO_TypeDef* stepPort;
-	uint16_t stepPin;
-	ADC_HandleTypeDef* hadc;
-	uint32_t adcChannel;
-	int lastStepPosition;
-	MotorState enabled;
-	int lastStablePotValue;
-	int lastMovementDirection;
-	int currentSpeed;
+    GPIO_TypeDef* enablePort;
+    uint16_t enablePin;
+    GPIO_TypeDef* directionPort;
+    uint16_t directionPin;
+    GPIO_TypeDef* stepPort;
+    uint16_t stepPin;
+    ADC_HandleTypeDef* hadc;
+    uint32_t adcChannel;
+    int lastStepPosition;
+    int totalSteps;  // Tracks absolute position including multiple revolutions
+    MotorState enabled;
+    int lastStablePotValue;
+    int lastMovementDirection;
+    int currentSpeed;
+    float rotationRange;
 } MotorController;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 #define min(a, b) ((a) < (b) ? (a) : (b))
-#define StepPerRevolution 6400
+#define StepPerRevolution 3200
 
 // Enhanced tuning parameters
 #define BASE_PULSE_WIDTH 150       // Increased for more stability
@@ -130,7 +132,8 @@ MotorController motor1 = {
 		.enabled = MOTOR_DISABLED,
 		.lastStablePotValue = 0,
 		.lastMovementDirection = 0,
-		.currentSpeed = BASE_PULSE_WIDTH
+		.currentSpeed = BASE_PULSE_WIDTH,
+		.rotationRange = 180.0f
 };
 
 MotorController motor2 = {
@@ -260,63 +263,69 @@ int readStablePot(MotorController* motor) {
 }
 
 void moveToPositionSmooth(MotorController* motor, int targetStep) {
-	int direction;
-	int totalSteps = abs(targetStep - motor->lastStepPosition);
+    int direction;
+    int stepsToMove = targetStep - motor->totalSteps;
 
-	if (totalSteps < MIN_MOVE_STEPS) {
-		return;
-	}
+    if (abs(stepsToMove) < MIN_MOVE_STEPS) {
+        return;
+    }
 
-	direction = (targetStep > motor->lastStepPosition) ? 1 : -1;
+    // Handle multi-revolution movement properly
+    int possibleSteps1 = stepsToMove;
+    int possibleSteps2 = stepsToMove - (StepPerRevolution * (motor->rotationRange / 360.0f));
+    int possibleSteps3 = stepsToMove + (StepPerRevolution * (motor->rotationRange / 360.0f));
 
-	if ((direction * motor->lastMovementDirection) < 0 &&
-			totalSteps < (POSITION_TOLERANCE*2)) {
-		direction = motor->lastMovementDirection;
-		totalSteps = abs(targetStep - motor->lastStepPosition);
-	}
+    // Find the shortest path
+    int shortestPath = possibleSteps1;
+    if (abs(possibleSteps2) < abs(shortestPath)) shortestPath = possibleSteps2;
+    if (abs(possibleSteps3) < abs(shortestPath)) shortestPath = possibleSteps3;
 
-	if (totalSteps > StepPerRevolution/2) {
-		direction *= -1;
-		totalSteps = StepPerRevolution - totalSteps;
-	}
+    direction = (shortestPath > 0) ? 1 : -1;
+    int totalSteps = abs(shortestPath);
 
-	HAL_GPIO_WritePin(motor->directionPort, motor->directionPin,
-			(direction > 0) ? GPIO_PIN_SET : GPIO_PIN_RESET);
-	motor->lastMovementDirection = direction;
+    if ((direction * motor->lastMovementDirection) < 0 &&
+            totalSteps < (POSITION_TOLERANCE*2)) {
+        direction = motor->lastMovementDirection;
+        stepsToMove = targetStep - motor->totalSteps;
+        totalSteps = abs(stepsToMove);
+    }
 
-	int accelSteps = min(ACCELERATION_STEPS, totalSteps/2);
-	int decelStart = totalSteps - accelSteps;
+    HAL_GPIO_WritePin(motor->directionPort, motor->directionPin,
+            (direction > 0) ? GPIO_PIN_SET : GPIO_PIN_RESET);
+    motor->lastMovementDirection = direction;
 
-	for (int i = 0; i < totalSteps; i++) {
-		int targetPulseWidth = BASE_PULSE_WIDTH;
+    int accelSteps = min(ACCELERATION_STEPS, totalSteps/2);
+    int decelStart = totalSteps - accelSteps;
 
-		if (i < accelSteps) {
-			float progress = (float)i / accelSteps;
-			targetPulseWidth = BASE_PULSE_WIDTH*2 - (BASE_PULSE_WIDTH * progress * progress * progress);
-		}
-		else if (i >= decelStart) {
-			float progress = (float)(i-decelStart) / accelSteps;
-			targetPulseWidth = BASE_PULSE_WIDTH + (BASE_PULSE_WIDTH * progress * progress * progress);
-		}
+    for (int i = 0; i < totalSteps; i++) {
+        int targetPulseWidth = BASE_PULSE_WIDTH;
 
-		if (abs(targetPulseWidth - motor->currentSpeed) > MAX_SPEED_CHANGE) {
-			if (targetPulseWidth < motor->currentSpeed) {
-				targetPulseWidth = motor->currentSpeed - MAX_SPEED_CHANGE;
-			} else {
-				targetPulseWidth = motor->currentSpeed + MAX_SPEED_CHANGE;
-			}
-		}
-		motor->currentSpeed = targetPulseWidth;
+        if (i < accelSteps) {
+            float progress = (float)i / accelSteps;
+            targetPulseWidth = BASE_PULSE_WIDTH*2 - (BASE_PULSE_WIDTH * progress * progress * progress);
+        }
+        else if (i >= decelStart) {
+            float progress = (float)(i-decelStart) / accelSteps;
+            targetPulseWidth = BASE_PULSE_WIDTH + (BASE_PULSE_WIDTH * progress * progress * progress);
+        }
 
-		HAL_GPIO_WritePin(motor->stepPort, motor->stepPin, GPIO_PIN_SET);
-		HAL_Delay_us(targetPulseWidth/2);
-		HAL_GPIO_WritePin(motor->stepPort, motor->stepPin, GPIO_PIN_RESET);
-		HAL_Delay_us(targetPulseWidth/2);
+        if (abs(targetPulseWidth - motor->currentSpeed) > MAX_SPEED_CHANGE) {
+            if (targetPulseWidth < motor->currentSpeed) {
+                targetPulseWidth = motor->currentSpeed - MAX_SPEED_CHANGE;
+            } else {
+                targetPulseWidth = motor->currentSpeed + MAX_SPEED_CHANGE;
+            }
+        }
+        motor->currentSpeed = targetPulseWidth;
 
-		motor->lastStepPosition += direction;
-		if (motor->lastStepPosition >= StepPerRevolution) motor->lastStepPosition = 0;
-		if (motor->lastStepPosition < 0) motor->lastStepPosition = StepPerRevolution - 1;
-	}
+        HAL_GPIO_WritePin(motor->stepPort, motor->stepPin, GPIO_PIN_SET);
+        HAL_Delay_us(targetPulseWidth/2);
+        HAL_GPIO_WritePin(motor->stepPort, motor->stepPin, GPIO_PIN_RESET);
+        HAL_Delay_us(targetPulseWidth/2);
+
+        motor->totalSteps += direction;
+        motor->lastStepPosition = motor->totalSteps % StepPerRevolution;
+    }
 }
 
 // Microsecond delay function
@@ -737,39 +746,52 @@ static void MX_GPIO_Init(void)
 /* USER CODE END Header_FirstMotor */
 void FirstMotor(void *argument)
 {
-  /* USER CODE BEGIN 5 */
-	// Initialize motor state
-	HAL_GPIO_WritePin(motor1.enablePort, motor1.enablePin, GPIO_PIN_SET);
-	motor1.enabled = MOTOR_DISABLED;
-	motor1.lastStablePotValue = readStablePot(&motor1);
+    HAL_GPIO_WritePin(motor1.enablePort, motor1.enablePin, GPIO_PIN_SET);
+    motor1.enabled = MOTOR_DISABLED;
+    motor1.lastStablePotValue = readStablePot(&motor1);
 
-	/* Infinite loop */
-	for(;;)
-	{
-		int potValue = readStablePot(&motor1);
-		int targetStep = (int)((float)potValue / 65535.0f * (StepPerRevolution-1));
+    for(;;) {
+        int potValue = readStablePot(&motor1);
+        int potDifference = abs(potValue - motor1.lastStablePotValue);
 
-		// Only react to significant pot changes with hysteresis
-		int potDifference = abs(potValue - motor1.lastStablePotValue);
+        if(potDifference > POT_DEADZONE ||
+                (motor1.enabled == MOTOR_ENABLED && potDifference > POT_DEADZONE/2)) {
+            if(motor1.enabled == MOTOR_DISABLED) {
+                HAL_GPIO_WritePin(motor1.enablePort, motor1.enablePin, GPIO_PIN_RESET);
+                motor1.enabled = MOTOR_ENABLED;
+            }
 
-		if(potDifference > POT_DEADZONE ||
-				(motor1.enabled == MOTOR_ENABLED && potDifference > POT_DEADZONE/2)) {
-			if(motor1.enabled == MOTOR_DISABLED) {
-				HAL_GPIO_WritePin(motor1.enablePort, motor1.enablePin, GPIO_PIN_RESET);
-				motor1.enabled = MOTOR_ENABLED;
-			}
+            // Calculate target steps based on full rotation range
+            float targetAngle = (float)potValue / 65535.0f * motor1.rotationRange;
+            int targetSteps = (int)(targetAngle/360.0f * StepPerRevolution);
 
-			moveToPositionSmooth(&motor1, targetStep);
-			motor1.lastStablePotValue = potValue;
-		}
-		else if(motor1.enabled == MOTOR_ENABLED &&
-				abs(targetStep - motor1.lastStepPosition) <= POSITION_TOLERANCE) {
-			HAL_GPIO_WritePin(motor1.enablePort, motor1.enablePin, GPIO_PIN_SET);
-			motor1.enabled = MOTOR_DISABLED;
-		}
+            // Handle wrap-around for multi-revolution ranges
+            int maxRevolutions = (int)(motor1.rotationRange / 360.0f);
 
-		osDelay(10); // Delay using FreeRTOS (10ms delay)
-	}
+            // Check if we need to wrap around (e.g., from 1080° back to 0°)
+            if (potValue < 1000 && motor1.lastStablePotValue > 64535) {
+                // Moving from high to low (wrap around forward)
+                targetSteps = (maxRevolutions * StepPerRevolution) + (int)((float)potValue / 65535.0f * StepPerRevolution);
+            } else if (potValue > 64535 && motor1.lastStablePotValue < 1000) {
+                // Moving from low to high (wrap around backward)
+                targetSteps = (int)((float)potValue / 65535.0f * StepPerRevolution) - StepPerRevolution;
+            }
+
+            moveToPositionSmooth(&motor1, targetSteps);
+            motor1.lastStablePotValue = potValue;
+        }
+        else if(motor1.enabled == MOTOR_ENABLED) {
+            // Compare absolute step positions
+            float targetAngle = (float)motor1.lastStablePotValue / 65535.0f * motor1.rotationRange;
+            int targetSteps = (int)(targetAngle/360.0f * StepPerRevolution);
+
+            if(abs(motor1.totalSteps - targetSteps) <= POSITION_TOLERANCE) {
+                HAL_GPIO_WritePin(motor1.enablePort, motor1.enablePin, GPIO_PIN_SET);
+                motor1.enabled = MOTOR_DISABLED;
+            }
+        }
+        osDelay(10);
+    }
   /* USER CODE END 5 */
 }
 
