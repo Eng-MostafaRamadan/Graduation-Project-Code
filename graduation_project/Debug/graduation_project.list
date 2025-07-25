@@ -629,10 +629,10 @@ void moveToPositionSmooth(MotorController* motor, int targetStep) {
  800072a:	6a5a      	ldr	r2, [r3, #36]	@ 0x24
  800072c:	4b10      	ldr	r3, [pc, #64]	@ (8000770 <moveToPositionSmooth+0x2c4>)
  800072e:	fb83 1302 	smull	r1, r3, r3, r2
- 8000732:	1299      	asrs	r1, r3, #10
+ 8000732:	12d9      	asrs	r1, r3, #11
  8000734:	17d3      	asrs	r3, r2, #31
  8000736:	1acb      	subs	r3, r1, r3
- 8000738:	f44f 6148 	mov.w	r1, #3200	@ 0xc80
+ 8000738:	f44f 51c8 	mov.w	r1, #6400	@ 0x1900
  800073c:	fb01 f303 	mul.w	r3, r1, r3
  8000740:	1ad3      	subs	r3, r2, r3
  8000742:	687a      	ldr	r2, [r7, #4]
@@ -654,7 +654,7 @@ void moveToPositionSmooth(MotorController* motor, int targetStep) {
  800075c:	46bd      	mov	sp, r7
  800075e:	bd80      	pop	{r7, pc}
  8000760:	43b40000 	.word	0x43b40000
- 8000764:	45480000 	.word	0x45480000
+ 8000764:	45c80000 	.word	0x45c80000
  8000768:	43160000 	.word	0x43160000
  800076c:	43960000 	.word	0x43960000
  8000770:	51eb851f 	.word	0x51eb851f
@@ -1813,7 +1813,7 @@ void FirstMotor(void *argument)
                 // Moving from high to low (wrap around forward)
                 targetSteps = (maxRevolutions * StepPerRevolution) + (int)((float)potValue / 65535.0f * StepPerRevolution);
  8000eca:	68fb      	ldr	r3, [r7, #12]
- 8000ecc:	f44f 6248 	mov.w	r2, #3200	@ 0xc80
+ 8000ecc:	f44f 52c8 	mov.w	r2, #6400	@ 0x1900
  8000ed0:	fb02 f303 	mul.w	r3, r2, r3
  8000ed4:	6a3a      	ldr	r2, [r7, #32]
  8000ed6:	ee07 2a90 	vmov	s15, r2
@@ -1847,7 +1847,7 @@ void FirstMotor(void *argument)
  8000f26:	ee67 7a87 	vmul.f32	s15, s15, s14
  8000f2a:	eefd 7ae7 	vcvt.s32.f32	s15, s15
  8000f2e:	ee17 3a90 	vmov	r3, s15
- 8000f32:	f5a3 6348 	sub.w	r3, r3, #3200	@ 0xc80
+ 8000f32:	f5a3 53c8 	sub.w	r3, r3, #6400	@ 0x1900
  8000f36:	627b      	str	r3, [r7, #36]	@ 0x24
             }
 
@@ -1924,7 +1924,7 @@ void FirstMotor(void *argument)
  8000fcc:	24000000 	.word	0x24000000
  8000fd0:	477fff00 	.word	0x477fff00
  8000fd4:	43b40000 	.word	0x43b40000
- 8000fd8:	45480000 	.word	0x45480000
+ 8000fd8:	45c80000 	.word	0x45c80000
 
 08000fdc <SecondMotor>:
  * @param argument: Not used
@@ -2049,7 +2049,7 @@ void SecondMotor(void *argument)
                 // Moving from high to low (wrap around forward)
                 targetSteps = (maxRevolutions * StepPerRevolution) + (int)((float)potValue / 65535.0f * StepPerRevolution);
  80010c6:	68fb      	ldr	r3, [r7, #12]
- 80010c8:	f44f 6248 	mov.w	r2, #3200	@ 0xc80
+ 80010c8:	f44f 52c8 	mov.w	r2, #6400	@ 0x1900
  80010cc:	fb02 f303 	mul.w	r3, r2, r3
  80010d0:	6a3a      	ldr	r2, [r7, #32]
  80010d2:	ee07 2a90 	vmov	s15, r2
@@ -2083,7 +2083,7 @@ void SecondMotor(void *argument)
  8001122:	ee67 7a87 	vmul.f32	s15, s15, s14
  8001126:	eefd 7ae7 	vcvt.s32.f32	s15, s15
  800112a:	ee17 3a90 	vmov	r3, s15
- 800112e:	f5a3 6348 	sub.w	r3, r3, #3200	@ 0xc80
+ 800112e:	f5a3 53c8 	sub.w	r3, r3, #6400	@ 0x1900
  8001132:	627b      	str	r3, [r7, #36]	@ 0x24
             }
 
@@ -2160,7 +2160,7 @@ void SecondMotor(void *argument)
  80011c8:	2400003c 	.word	0x2400003c
  80011cc:	477fff00 	.word	0x477fff00
  80011d0:	43b40000 	.word	0x43b40000
- 80011d4:	45480000 	.word	0x45480000
+ 80011d4:	45c80000 	.word	0x45c80000
 
 080011d8 <ThirdMotor>:
  * @param argument: Not used
@@ -2285,7 +2285,7 @@ void ThirdMotor(void *argument)
                 // Moving from high to low (wrap around forward)
                 targetSteps = (maxRevolutions * StepPerRevolution) + (int)((float)potValue / 65535.0f * StepPerRevolution);
  80012c2:	68fb      	ldr	r3, [r7, #12]
- 80012c4:	f44f 6248 	mov.w	r2, #3200	@ 0xc80
+ 80012c4:	f44f 52c8 	mov.w	r2, #6400	@ 0x1900
  80012c8:	fb02 f303 	mul.w	r3, r2, r3
  80012cc:	6a3a      	ldr	r2, [r7, #32]
  80012ce:	ee07 2a90 	vmov	s15, r2
@@ -2319,7 +2319,7 @@ void ThirdMotor(void *argument)
  800131e:	ee67 7a87 	vmul.f32	s15, s15, s14
  8001322:	eefd 7ae7 	vcvt.s32.f32	s15, s15
  8001326:	ee17 3a90 	vmov	r3, s15
- 800132a:	f5a3 6348 	sub.w	r3, r3, #3200	@ 0xc80
+ 800132a:	f5a3 53c8 	sub.w	r3, r3, #6400	@ 0x1900
  800132e:	627b      	str	r3, [r7, #36]	@ 0x24
             }
 
@@ -2396,7 +2396,7 @@ void ThirdMotor(void *argument)
  80013c4:	24000078 	.word	0x24000078
  80013c8:	477fff00 	.word	0x477fff00
  80013cc:	43b40000 	.word	0x43b40000
- 80013d0:	45480000 	.word	0x45480000
+ 80013d0:	45c80000 	.word	0x45c80000
 
 080013d4 <FourthMotor>:
  * @param argument: Not used
@@ -2521,7 +2521,7 @@ void FourthMotor(void *argument)
                 // Moving from high to low (wrap around forward)
                 targetSteps = (maxRevolutions * StepPerRevolution) + (int)((float)potValue / 65535.0f * StepPerRevolution);
  80014be:	68fb      	ldr	r3, [r7, #12]
- 80014c0:	f44f 6248 	mov.w	r2, #3200	@ 0xc80
+ 80014c0:	f44f 52c8 	mov.w	r2, #6400	@ 0x1900
  80014c4:	fb02 f303 	mul.w	r3, r2, r3
  80014c8:	6a3a      	ldr	r2, [r7, #32]
  80014ca:	ee07 2a90 	vmov	s15, r2
@@ -2555,7 +2555,7 @@ void FourthMotor(void *argument)
  800151a:	ee67 7a87 	vmul.f32	s15, s15, s14
  800151e:	eefd 7ae7 	vcvt.s32.f32	s15, s15
  8001522:	ee17 3a90 	vmov	r3, s15
- 8001526:	f5a3 6348 	sub.w	r3, r3, #3200	@ 0xc80
+ 8001526:	f5a3 53c8 	sub.w	r3, r3, #6400	@ 0x1900
  800152a:	627b      	str	r3, [r7, #36]	@ 0x24
             }
 
@@ -2632,7 +2632,7 @@ void FourthMotor(void *argument)
  80015c0:	240000b4 	.word	0x240000b4
  80015c4:	477fff00 	.word	0x477fff00
  80015c8:	43b40000 	.word	0x43b40000
- 80015cc:	45480000 	.word	0x45480000
+ 80015cc:	45c80000 	.word	0x45c80000
 
 080015d0 <FifthMotor>:
 * @param argument: Not used
@@ -2757,7 +2757,7 @@ void FifthMotor(void *argument)
                 // Moving from high to low (wrap around forward)
                 targetSteps = (maxRevolutions * StepPerRevolution) + (int)((float)potValue / 65535.0f * StepPerRevolution);
  80016ba:	68fb      	ldr	r3, [r7, #12]
- 80016bc:	f44f 6248 	mov.w	r2, #3200	@ 0xc80
+ 80016bc:	f44f 52c8 	mov.w	r2, #6400	@ 0x1900
  80016c0:	fb02 f303 	mul.w	r3, r2, r3
  80016c4:	6a3a      	ldr	r2, [r7, #32]
  80016c6:	ee07 2a90 	vmov	s15, r2
@@ -2791,7 +2791,7 @@ void FifthMotor(void *argument)
  8001716:	ee67 7a87 	vmul.f32	s15, s15, s14
  800171a:	eefd 7ae7 	vcvt.s32.f32	s15, s15
  800171e:	ee17 3a90 	vmov	r3, s15
- 8001722:	f5a3 6348 	sub.w	r3, r3, #3200	@ 0xc80
+ 8001722:	f5a3 53c8 	sub.w	r3, r3, #6400	@ 0x1900
  8001726:	627b      	str	r3, [r7, #36]	@ 0x24
             }
 
@@ -2868,7 +2868,7 @@ void FifthMotor(void *argument)
  80017bc:	240000f0 	.word	0x240000f0
  80017c0:	477fff00 	.word	0x477fff00
  80017c4:	43b40000 	.word	0x43b40000
- 80017c8:	45480000 	.word	0x45480000
+ 80017c8:	45c80000 	.word	0x45c80000
 
 080017cc <SixthMotor>:
 * @param argument: Not used
@@ -2993,7 +2993,7 @@ void SixthMotor(void *argument)
                 // Moving from high to low (wrap around forward)
                 targetSteps = (maxRevolutions * StepPerRevolution) + (int)((float)potValue / 65535.0f * StepPerRevolution);
  80018b6:	68fb      	ldr	r3, [r7, #12]
- 80018b8:	f44f 6248 	mov.w	r2, #3200	@ 0xc80
+ 80018b8:	f44f 52c8 	mov.w	r2, #6400	@ 0x1900
  80018bc:	fb02 f303 	mul.w	r3, r2, r3
  80018c0:	6a3a      	ldr	r2, [r7, #32]
  80018c2:	ee07 2a90 	vmov	s15, r2
@@ -3027,7 +3027,7 @@ void SixthMotor(void *argument)
  8001912:	ee67 7a87 	vmul.f32	s15, s15, s14
  8001916:	eefd 7ae7 	vcvt.s32.f32	s15, s15
  800191a:	ee17 3a90 	vmov	r3, s15
- 800191e:	f5a3 6348 	sub.w	r3, r3, #3200	@ 0xc80
+ 800191e:	f5a3 53c8 	sub.w	r3, r3, #6400	@ 0x1900
  8001922:	627b      	str	r3, [r7, #36]	@ 0x24
             }
 
@@ -3105,7 +3105,7 @@ void SixthMotor(void *argument)
  80019bc:	240000f0 	.word	0x240000f0
  80019c0:	477fff00 	.word	0x477fff00
  80019c4:	43b40000 	.word	0x43b40000
- 80019c8:	45480000 	.word	0x45480000
+ 80019c8:	45c80000 	.word	0x45c80000
 
 080019cc <MPU_Config>:
 }

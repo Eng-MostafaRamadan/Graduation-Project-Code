@@ -57,7 +57,7 @@ typedef struct {
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 #define min(a, b) ((a) < (b) ? (a) : (b))
-#define StepPerRevolution 3200
+#define StepPerRevolution 6400
 
 // Enhanced tuning parameters
 #define BASE_PULSE_WIDTH 150       // Increased for more stability
@@ -133,7 +133,7 @@ MotorController motor1 = {
 		.lastStablePotValue = 0,
 		.lastMovementDirection = 0,
 		.currentSpeed = BASE_PULSE_WIDTH,
-		.rotationRange = 720.0f
+		.rotationRange = 2160.0f
 };
 
 MotorController motor2 = {
@@ -146,7 +146,7 @@ MotorController motor2 = {
 		.lastStablePotValue = 0,
 		.lastMovementDirection = 0,
 		.currentSpeed = BASE_PULSE_WIDTH,
-		.rotationRange = 720.0f
+		.rotationRange = -3060.0f
 };
 
 MotorController motor3 = {
@@ -159,7 +159,7 @@ MotorController motor3 = {
 		.lastStablePotValue = 0,
 		.lastMovementDirection = 0,
 		.currentSpeed = BASE_PULSE_WIDTH,
-		.rotationRange = 720.0f
+		.rotationRange = -720.0f
 };
 
 MotorController motor4 = {
@@ -172,7 +172,7 @@ MotorController motor4 = {
 		.lastStablePotValue = 0,
 		.lastMovementDirection = 0,
 		.currentSpeed = BASE_PULSE_WIDTH,
-		.rotationRange = 720.0f
+		.rotationRange = 2160.0f
 };
 
 MotorController motor5 = {
@@ -185,7 +185,7 @@ MotorController motor5 = {
 		.lastStablePotValue = 0,
 		.lastMovementDirection = 0,
 		.currentSpeed = BASE_PULSE_WIDTH,
-		.rotationRange = 720.0f
+		.rotationRange = -720.0f
 };
 
 MotorController motor6 = {
